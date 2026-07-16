@@ -173,6 +173,90 @@ def parse_text_edits(lines):
     return edits
 
 
+FORMAT_KEYWORDS = {
+    '居中对齐': ('alignment', 'center'),
+    '左对齐': ('alignment', 'left'),
+    '右对齐': ('alignment', 'right'),
+    '两端对齐': ('alignment', 'justify'),
+    '加粗': ('bold', True),
+    '斜体': ('italic', True),
+}
+
+
+def parse_format_value(text):
+    """解析格式值"""
+    match = re.match(r'行距([\d.]+)倍', text)
+    if match:
+        return ('line_spacing', float(match.group(1)))
+
+    match = re.match(r'段前([\d.]+)pt', text)
+    if match:
+        return ('space_before', float(match.group(1)))
+
+    match = re.match(r'段后([\d.]+)pt', text)
+    if match:
+        return ('space_after', float(match.group(1)))
+
+    match = re.match(r'左缩进([\d.]+)pt', text)
+    if match:
+        return ('indent_left', float(match.group(1)))
+
+    match = re.match(r'右缩进([\d.]+)pt', text)
+    if match:
+        return ('indent_right', float(match.group(1)))
+
+    match = re.match(r'字号([\d.]+)pt', text)
+    if match:
+        return ('font_size', float(match.group(1)))
+
+    return None
+
+
+def parse_format_edits(lines):
+    """解析 Format Edits section"""
+    edits = []
+    current_para = None
+    current_changes = {}
+
+    for line in lines:
+        para_match = re.match(r'^Para\s+(\d+)(?:-(\d+))?:\s*(.*)', line)
+        if para_match:
+            if current_para is not None and current_changes:
+                edits.append({
+                    "scope": "paragraph",
+                    "paragraph_index": current_para,
+                    "changes": current_changes.copy(),
+                    "author": None
+                })
+            current_para = int(para_match.group(1))
+            current_changes = {}
+            continue
+
+        if current_para is None:
+            continue
+
+        items = [x.strip() for x in line.split(',')]
+        for item in items:
+            for keyword, (key, value) in FORMAT_KEYWORDS.items():
+                if keyword in item:
+                    current_changes[key] = value
+                    break
+            else:
+                result = parse_format_value(item)
+                if result:
+                    current_changes[result[0]] = result[1]
+
+    if current_para is not None and current_changes:
+        edits.append({
+            "scope": "paragraph",
+            "paragraph_index": current_para,
+            "changes": current_changes,
+            "author": None
+        })
+
+    return edits
+
+
 def main():
     if len(sys.argv) < 3:
         print("用法: python md_to_json.py <input.md> <output.json>")
@@ -204,6 +288,9 @@ def main():
     
     if 'Text Edits' in sections:
         config["text_modifications"] = parse_text_edits(sections['Text Edits'])
+    
+    if 'Format Edits' in sections:
+        config["format_modifications"] = parse_format_edits(sections['Format Edits'])
 
     if config["text_modifications"]:
         doc = Document(config["source"])
