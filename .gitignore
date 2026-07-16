@@ -1,3 +1,21 @@
-scripts/__pycache__/
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Generated files
 examples/**/*.docx
 examples/**/*.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OpenCode
+.omo/
