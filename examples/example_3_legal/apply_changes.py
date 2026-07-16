@@ -52,6 +52,23 @@ def main():
     for mod in config.get("format_modifications", []):
         if mod.get("author") is None:
             mod["author"] = global_author
+    for mod in config.get("table_modifications", []):
+        if mod.get("author") is None:
+            mod["author"] = global_author
+    for mod in config.get("style_modifications", []):
+        if mod.get("author") is None:
+            mod["author"] = global_author
+
+    # 解析相对路径为绝对路径
+    source = Path(config["source"])
+    if not source.is_absolute():
+        source = EXAMPLE_DIR / source
+    config["source"] = str(source)
+
+    output = Path(config["output"])
+    if not output.is_absolute():
+        output = EXAMPLE_DIR / output
+    config["output"] = str(output)
 
     reviewer = ComprehensiveDocxReviewer(config["source"])
     reviewer.apply_json_config(config)
