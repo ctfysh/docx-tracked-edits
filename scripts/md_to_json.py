@@ -61,7 +61,7 @@ def parse_sections(body):
         if line.startswith('# '):
             current_section = line[2:].strip()
             sections[current_section] = []
-        elif current_section and line.strip():
+        elif current_section and line.strip() and line.strip() != '---':
             sections[current_section].append(line)
     
     return sections
