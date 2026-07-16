@@ -1,3 +1,5 @@
+[English](#docx-tracked-edits-examples) | [中文](#docx-tracked-edits-1)
+
 # Docx Tracked Edits Examples
 
 ## Example 1: Academic Paper Editing

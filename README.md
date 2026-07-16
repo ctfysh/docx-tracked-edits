@@ -1,3 +1,7 @@
+[English](#docx-tracked-edits) | [中文](#docx-tracked-edits-1)
+
+---
+
 # Docx Tracked Edits
 
 AI-driven docx editing with tracked changes. Edit Word documents using readable Markdown templates.
@@ -285,6 +289,8 @@ python scripts/md_to_json.py --test
 MIT
 
 ---
+
+[English](#docx-tracked-edits) | [中文](#docx-tracked-edits-1)
 
 # Docx Tracked Edits
 
