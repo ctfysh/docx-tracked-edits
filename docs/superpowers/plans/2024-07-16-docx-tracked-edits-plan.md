@@ -15,6 +15,24 @@
 - 歧义处理：出现多次时报错并显示位置
 - 输出路径：`/Users/tiger/Desktop/OpenSource/docx-tracked-edits/`
 
+### Core Design Principles
+
+#### 1. Minimalism Principle (极简原则)
+
+**生成 JSON 文档时不要出现成句成段的替换，只替换关键字母、单词（词组）或者标点就可以了，并且尽可能给出准确位置。**
+
+- 更清晰的修订历史
+- 更精确的审核
+- 减少冲突
+
+#### 2. Tool Diversity Principle (工具多样化原则)
+
+**不能只用 replace，还要根据实际需要用 delete 和 insert 等工具。**
+
+- replace: 修改已有文本
+- delete: 删除冗余/错误内容
+- insert: 添加缺失内容
+
 ---
 
 ### Task 1: 复制 docx_revision 包

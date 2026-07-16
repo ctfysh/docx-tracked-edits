@@ -14,6 +14,92 @@
 - 协作编辑工作流
 - 通用文档编辑
 
+## 核心设计原则
+
+### 1. 极简原则 (Minimalism Principle)
+
+**生成 JSON 文档时不要出现成句成段的替换，只替换关键字母、单词（词组）或者标点就可以了，并且尽可能给出准确位置。**
+
+#### 为什么？
+
+- **更清晰的修订历史**：用户可以看到具体修改了什么，而不是整段被标记为删除/新增
+- **更精确的审核**：审阅者可以逐个单词/短语地检查修改
+- **减少冲突**：多人协作时，小范围修改更容易合并
+
+#### 什么时候用极简替换？
+
+| 场景 | 错误做法 ❌ | 正确做法 ✅ |
+|------|-----------|------------|
+| 修改术语 | `将 "novel approach for flood monitoring method" 改为 "improved method for flood detection"` | `将 "novel" 改为 "improved"` + `将 "monitoring" 改为 "detection"` |
+| 删除冗余 | `删除: "as previously reported in our earlier studies"` | `删除: "as previously reported"` + `删除: "in our earlier studies"` |
+| 修正拼写 | `将 "significantly differents results" 改为 "significantly different results"` | `将 "differents" 改为 "different"` |
+| 添加内容 | `在开头插入: This is an important finding that needs to be highlighted.` | `在开头插入: Important: ` |
+
+#### 准确位置要求
+
+当文本在段落中出现多次时，**必须**添加位置信息：
+
+```markdown
+# 错误 ❌（歧义）
+删除: "the"
+
+# 正确 ✅（带位置）
+删除: "the" (第15-18字符)
+```
+
+### 2. 工具多样化原则 (Tool Diversity Principle)
+
+**不能只用 replace，还要根据实际需要用 delete 和 insert 等工具。**
+
+#### 三种工具的适用场景
+
+| 工具 | 适用场景 | 示例 |
+|------|---------|------|
+| **replace** | 修改已有文本 | `将 "old" 改为 "new"` |
+| **delete** | 删除冗余/错误内容 | `删除: "unnecessary text"` |
+| **insert** | 添加缺失内容 | `在开头插入: Note: ` |
+
+#### 什么时候用 delete + insert 而不是 replace？
+
+| 场景 | 错误做法 ❌ | 正确做法 ✅ |
+|------|-----------|------------|
+| 删除一整段 | `将 "这是一段很长的内容..." 改为 ""` | `删除: "这是一段很长的内容..."` |
+| 在特定位置插入 | `将 "原文" 改为 "新内容 原文"` | `在开头插入: 新内容` |
+| 删除后重新组织 | `将 "A, B, C" 改为 "A, C"` | `删除: ", B"` |
+| 添加前缀/后缀 | `将 "result" 改为 "Updated: result"` | `在开头插入: Updated: ` |
+
+#### 组合使用示例
+
+```markdown
+# Text Edits
+
+Para 15: 修正术语
+将 "novel" 改为 "improved"
+
+Para 23: 删除冗余
+删除: "as previously reported"
+
+Para 32: 补充说明
+在开头插入: Note: 
+在末尾插入: (validated)
+
+Para 45: 修正拼写
+将 "differents" 改为 "different"
+```
+
+**这个 JSON 会被转换为：**
+```json
+{
+  "text_modifications": [
+    {"type": "replace", "paragraph_index": 15, "old_text": "novel", "new_text": "improved"},
+    {"type": "delete", "paragraph_index": 23, "text": "as previously reported"},
+    {"type": "insert", "paragraph_index": 32, "text": "Note: ", "position": 0},
+    {"type": "insert", "paragraph_index": 32, "text": " (validated)", "position": null},
+    {"type": "replace", "paragraph_index": 45, "old_text": "differents", "new_text": "different"}
+  ]
+}
+```
+
 ## 目录结构
 
 ```

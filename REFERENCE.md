@@ -1,5 +1,59 @@
 # Docx Tracked Edits Reference
 
+## Core Design Principles
+
+### 1. Minimalism Principle (极简原则)
+
+**When generating JSON, do NOT replace whole sentences or paragraphs. Only replace key letters, words (phrases), or punctuation, and provide accurate positions whenever possible.**
+
+#### Why?
+
+- **Clearer revision history**: Users can see exactly what changed, not entire paragraphs marked as deleted/added
+- **More precise review**: Reviewers can check changes word by word/phrase by phrase
+- **Fewer conflicts**: Smaller changes are easier to merge in collaborative editing
+
+#### Examples
+
+| Scenario | Wrong ❌ | Right ✅ |
+|----------|---------|----------|
+| Fix terminology | `将 "novel approach for flood monitoring method" 改为 "improved method for flood detection"` | `将 "novel" 改为 "improved"` + `将 "monitoring" 改为 "detection"` |
+| Delete redundancy | `删除: "as previously reported in our earlier studies"` | `删除: "as previously reported"` + `删除: "in our earlier studies"` |
+| Fix spelling | `将 "significantly differents results" 改为 "significantly different results"` | `将 "differents" 改为 "different"` |
+| Add content | `在开头插入: This is an important finding that needs to be highlighted.` | `在开头插入: Important: ` |
+
+#### Position Requirement
+
+When text appears multiple times in a paragraph, you **MUST** add position information:
+
+```markdown
+# Wrong ❌ (ambiguous)
+删除: "the"
+
+# Right ✅ (with position)
+删除: "the" (第15-18字符)
+```
+
+### 2. Tool Diversity Principle (工具多样化原则)
+
+**Do NOT only use replace. Use delete and insert tools as appropriate based on actual needs.**
+
+#### Three Tools and Their Use Cases
+
+| Tool | Use Case | Example |
+|------|----------|---------|
+| **replace** | Modify existing text | `将 "old" 改为 "new"` |
+| **delete** | Remove redundant/incorrect content | `删除: "unnecessary text"` |
+| **insert** | Add missing content | `在开头插入: Note: ` |
+
+#### When to Use delete + insert Instead of replace?
+
+| Scenario | Wrong ❌ | Right ✅ |
+|----------|---------|----------|
+| Delete entire paragraph | `将 "这是一段很长的内容..." 改为 ""` | `删除: "这是一段很长的内容..."` |
+| Insert at specific position | `将 "原文" 改为 "新内容 原文"` | `在开头插入: 新内容` |
+| Delete and reorganize | `将 "A, B, C" 改为 "A, C"` | `删除: ", B"` |
+| Add prefix/suffix | `将 "result" 改为 "Updated: result"` | `在开头插入: Updated: ` |
+
 ## Markdown Template Syntax
 
 ### Header

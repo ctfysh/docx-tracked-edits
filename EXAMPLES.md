@@ -316,6 +316,138 @@ Normal 样式:
   字体Arial, 字号10pt
 ```
 
+## Example 8: Minimalism Principle in Action (极简原则示例)
+
+This example demonstrates how to apply the **Minimalism Principle** — only replace key words/phrases, not entire sentences.
+
+### Scenario: Academic Paper Editing with Minimal Changes
+
+**Original paragraph (Para 15):**
+> The novel approach for flood monitoring method demonstrates significant improvements in accuracy compared to traditional techniques.
+
+**Wrong approach ❌ (replacing entire sentence):**
+```markdown
+Para 15: 修正术语
+将 "The novel approach for flood monitoring method demonstrates significant improvements in accuracy compared to traditional techniques." 改为 "The improved method for flood detection shows enhanced accuracy compared to traditional approaches."
+```
+
+**Right approach ✅ (minimal changes):**
+```markdown
+Para 15: 修正术语
+将 "novel" 改为 "improved"
+将 "monitoring" 改为 "detection"
+将 "demonstrates" 改为 "shows"
+将 "significant improvements" 改为 "enhanced accuracy"
+将 "techniques" 改为 "approaches"
+```
+
+### What This Generates
+
+```json
+{
+  "text_modifications": [
+    {"type": "replace", "paragraph_index": 15, "old_text": "novel", "new_text": "improved"},
+    {"type": "replace", "paragraph_index": 15, "old_text": "monitoring", "new_text": "detection"},
+    {"type": "replace", "paragraph_index": 15, "old_text": "demonstrates", "new_text": "shows"},
+    {"type": "replace", "paragraph_index": 15, "old_text": "significant improvements", "new_text": "enhanced accuracy"},
+    {"type": "replace", "paragraph_index": 15, "old_text": "techniques", "new_text": "approaches"}
+  ]
+}
+```
+
+### Why This Is Better
+
+| Aspect | Wrong ❌ | Right ✅ |
+|--------|---------|----------|
+| Revision history | Entire paragraph marked as deleted/added | Individual words highlighted |
+| Review experience | Hard to see what changed | Easy to verify each change |
+| Conflict potential | High (whole paragraph) | Low (individual words) |
+| Audit trail | Opaque | Transparent |
+
+## Example 9: Tool Diversity in Action (工具多样化示例)
+
+This example demonstrates how to use **delete** and **insert** instead of just replace.
+
+### Scenario: Removing Redundant Text and Adding Notes
+
+**Original paragraph (Para 23):**
+> As previously reported in our earlier studies, the results show significant correlation.
+
+**Wrong approach ❌ (using only replace):**
+```markdown
+Para 23: 修改
+将 "As previously reported in our earlier studies, " 改为 ""
+将 "show significant" 改为 "demonstrate statistically significant"
+```
+
+**Right approach ✅ (using delete + insert + replace):**
+```markdown
+Para 23: 修改
+删除: "As previously reported in our earlier studies, "
+将 "show significant" 改为 "demonstrate statistically significant"
+在末尾插入: (p < 0.05)
+```
+
+### What This Generates
+
+```json
+{
+  "text_modifications": [
+    {"type": "delete", "paragraph_index": 23, "text": "As previously reported in our earlier studies, "},
+    {"type": "replace", "paragraph_index": 23, "old_text": "show significant", "new_text": "demonstrate statistically significant"},
+    {"type": "insert", "paragraph_index": 23, "text": "(p < 0.05)", "position": null}
+  ]
+}
+```
+
+### Why This Is Better
+
+| Aspect | Wrong ❌ | Right ✅ |
+|--------|---------|----------|
+| Clarity | Replacing empty string is confusing | Delete is explicit |
+| Readability | Hard to understand intent | Clear intent: delete, replace, insert |
+| Maintenance | Ambiguous operations | Unambiguous operations |
+| Tool usage | Only replace | Proper use of delete, replace, insert |
+
+## Example 10: Position-Aware Editing (位置感知编辑)
+
+This example demonstrates when and how to use position information.
+
+### Scenario: Text Appears Multiple Times
+
+**Original paragraph (Para 8):**
+> The the results show that the the effect is significant.
+
+**Wrong approach ❌ (ambiguous):**
+```markdown
+Para 8: 修正重复
+删除: "the"
+```
+
+**Right approach ✅ (with position):**
+```markdown
+Para 8: 修正重复
+删除: "the" (第4-7字符)
+删除: "the" (第18-21字符)
+```
+
+### What This Generates
+
+```json
+{
+  "text_modifications": [
+    {"type": "delete", "paragraph_index": 8, "text": "the", "start_pos": 4, "end_pos": 7},
+    {"type": "delete", "paragraph_index": 8, "text": "the", "start_pos": 18, "end_pos": 21}
+  ]
+}
+```
+
+### Position Rules
+
+1. **When to use position**: When the same text appears multiple times in a paragraph
+2. **Format**: `(第{start}-{end}字符)` — 0-indexed, inclusive on both ends
+3. **How to find position**: Count characters from the beginning of the paragraph
+
 ## Quick Start
 
 1. Read source docx to understand structure
