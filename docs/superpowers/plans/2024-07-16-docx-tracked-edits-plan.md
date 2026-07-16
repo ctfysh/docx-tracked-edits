@@ -1026,6 +1026,348 @@ git commit -m "docs: add README.md"
 
 ---
 
+### Task 14: 完善示例文档
+
+**Files:**
+- Modify: `EXAMPLES.md`
+
+**Interfaces:**
+- Consumes: 设计文档中的示例设计要求
+- Produces: 完善后的 EXAMPLES.md
+
+**Goal:** 将现有示例升级为完整的端到端演示，每个示例包含四个部分：
+1. 原始文档内容
+2. 生成的 Changes Markdown
+3. 生成的 JSON
+4. 最终文档效果
+
+- [ ] **Step 1: 设计示例结构**
+
+每个示例必须包含五个部分：
+
+```markdown
+## Example N: [场景名称]
+
+### 原始文档
+
+**Para 8:**
+> The novel approach for flood monitoring method demonstrates significant improvements in accuracy compared to traditional techniques.
+
+**Para 15:**
+> As previously reported in our earlier studies, the results show significant correlation.
+
+### 生成原始文档的代码
+
+\```python
+#!/usr/bin/env python3
+"""生成 Example N 的原始 docx 文档"""
+from docx import Document
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+def create_original_doc():
+    doc = Document()
+    
+    # Para 0: 标题
+    title = doc.add_heading('Example N: Academic Paper', 0)
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    
+    # Para 8: 需要修改的段落
+    doc.add_paragraph(
+        'The novel approach for flood monitoring method demonstrates '
+        'significant improvements in accuracy compared to traditional techniques.'
+    )
+    
+    # Para 15: 需要删除冗余的段落
+    doc.add_paragraph(
+        'As previously reported in our earlier studies, the results show '
+        'significant correlation between the variables.'
+    )
+    
+    # 保存
+    doc.save('example_n_original.docx')
+    print('✅ 已生成: example_n_original.docx')
+
+if __name__ == '__main__':
+    create_original_doc()
+\```
+
+### Changes Markdown
+
+\```markdown
+---
+author: Tiger
+source: example_n_original.docx
+output: example_n_revised.docx
+---
+
+# Text Edits
+
+Para 8: 修正术语
+将 "novel" 改为 "improved"
+将 "monitoring" 改为 "detection"
+
+Para 15: 删除冗余
+删除: "As previously reported in our earlier studies, "
+\```
+
+### 生成的 JSON
+
+\```json
+{
+  "author": "Tiger",
+  "source": "example_n_original.docx",
+  "output": "example_n_revised.docx",
+  "text_modifications": [
+    {"type": "replace", "paragraph_index": 8, "old_text": "novel", "new_text": "improved"},
+    {"type": "replace", "paragraph_index": 8, "old_text": "monitoring", "new_text": "detection"},
+    {"type": "delete", "paragraph_index": 15, "text": "As previously reported in our earlier studies, "}
+  ]
+}
+\```
+
+### 应用修订的代码
+
+\```python
+#!/usr/bin/env python3
+"""将修订应用到 Example N 的 docx 文档"""
+import json
+import sys
+sys.path.insert(0, 'scripts')
+from docx_revision import ComprehensiveDocxReviewer
+
+def apply_changes():
+    with open('example_n_changes.json') as f:
+        config = json.load(f)
+    
+    reviewer = ComprehensiveDocxReviewer(config['source'])
+    reviewer.apply_json_config(config)
+    reviewer.save(config['output'])
+    print(f'✅ 已生成修订文档: {config["output"]}')
+
+if __name__ == '__main__':
+    apply_changes()
+\```
+
+### 最终效果
+
+**Para 8 (Revised):**
+> The ~~novel~~ **improved** approach for flood ~~monitoring~~ **detection** method demonstrates significant improvements in accuracy compared to traditional techniques.
+
+**Para 15 (Revised):**
+> ~~As previously reported in our earlier studies,~~ the results show significant correlation.
+
+**批注:**
+> [T] 修正术语：novel → improved, monitoring → detection
+```
+
+### 目录结构
+
+```
+examples/
+├── example_1_academic/
+│   ├── create_original.py
+│   ├── changes.md
+│   ├── apply_changes.py
+│   └── README.md
+├── example_2_business/
+│   ├── create_original.py
+│   ├── changes.md
+│   ├── apply_changes.py
+│   └── README.md
+├── example_3_legal/
+│   ├── create_original.py
+│   ├── changes.md
+│   ├── apply_changes.py
+│   └── README.md
+├── example_4_complex/
+│   ├── create_original.py
+│   ├── changes.md
+│   ├── apply_changes.py
+│   └── README.md
+└── run_all_examples.sh
+```
+
+### 完整运行流程
+
+```bash
+# 1. 生成原始文档
+python examples/example_n/create_original.py
+
+# 2. 转换 changes.md 到 JSON
+python scripts/md_to_json.py examples/example_n/changes.md examples/example_n/changes.json
+
+# 3. 应用修订
+python examples/example_n/apply_changes.py
+
+# 4. 查看结果
+ls -la example_n_*.docx
+```
+
+- [ ] **Step 2: 重写 Example 1 (学术论文编辑)**
+
+包含：
+- 3-5 个段落的原始内容
+- 体现极简原则的多个小替换
+- 体现工具多样性的 delete + insert 组合
+- 批注和格式修改
+- 完整的 JSON 输出
+- 最终效果展示
+
+- [ ] **Step 3: 重写 Example 2 (商业报告)**
+
+包含：
+- 表格数据的原始内容
+- 表格编辑（插入行、删除行、合并单元格）
+- 数据更新的极简替换
+- 完整的 JSON 输出
+
+- [ ] **Step 4: 重写 Example 3 (法律文档)**
+
+包含：
+- 条款的原始内容
+- 条款删除和插入
+- 日期和金额的精确修改
+- 完整的 JSON 输出
+
+- [ ] **Step 5: 重写 Example 4 (多节复杂文档)**
+
+包含：
+- 多个节的原始内容
+- 跨节的修改
+- 样式修改
+- 全局替换
+- 完整的 JSON 输出
+
+- [ ] **Step 6: 保留 Example 5-7 (简单示例)**
+
+保留现有的简单示例作为快速参考，但添加说明：
+
+```markdown
+## Example 5: Minimal Single Edit (简单示例)
+
+> **Note:** This is a simplified example for quick reference. See Examples 1-4 for complete end-to-end demonstrations.
+```
+
+- [ ] **Step 7: 更新 Example 8-10 (原则示例)**
+
+更新现有的原则示例，添加完整的四部分结构：
+
+```markdown
+## Example 8: Minimalism Principle in Action (极简原则示例)
+
+### 原始文档
+
+**Para 15:**
+> The novel approach for flood monitoring method demonstrates significant improvements in accuracy compared to traditional techniques.
+
+### Changes Markdown
+
+\```markdown
+Para 15: 修正术语
+将 "novel" 改为 "improved"
+将 "monitoring" 改为 "detection"
+将 "demonstrates" 改为 "shows"
+\```
+
+### 生成的 JSON
+
+\```json
+{
+  "text_modifications": [
+    {"type": "replace", "paragraph_index": 15, "old_text": "novel", "new_text": "improved"},
+    {"type": "replace", "paragraph_index": 15, "old_text": "monitoring", "new_text": "detection"},
+    {"type": "replace", "paragraph_index": 15, "old_text": "demonstrates", "new_text": "shows"}
+  ]
+}
+\```
+
+### 最终效果
+
+**Para 15 (Revised):**
+> The ~~novel~~ **improved** approach for flood ~~monitoring~~ **detection** method ~~demonstrates~~ **shows** significant improvements in accuracy compared to traditional techniques.
+```
+
+- [ ] **Step 8: 创建目录结构和运行脚本**
+
+创建 examples 目录结构：
+
+```bash
+mkdir -p examples/example_1_academic
+mkdir -p examples/example_2_business
+mkdir -p examples/example_3_legal
+mkdir -p examples/example_4_complex
+```
+
+创建 `examples/run_all_examples.sh`:
+
+```bash
+#!/bin/bash
+# 运行所有示例
+
+set -e
+
+echo "🚀 运行所有示例..."
+
+for dir in examples/example_*/; do
+    echo ""
+    echo "📁 运行示例: $dir"
+    
+    # 生成原始文档
+    if [ -f "$dir/create_original.py" ]; then
+        echo "  生成原始文档..."
+        python "$dir/create_original.py"
+    fi
+    
+    # 转换 changes.md 到 JSON
+    if [ -f "$dir/changes.md" ]; then
+        echo "  转换 changes.md 到 JSON..."
+        python scripts/md_to_json.py "$dir/changes.md" "$dir/changes.json"
+    fi
+    
+    # 应用修订
+    if [ -f "$dir/apply_changes.py" ]; then
+        echo "  应用修订..."
+        python "$dir/apply_changes.py"
+    fi
+    
+    echo "  ✅ 完成"
+done
+
+echo ""
+echo "✅ 所有示例运行完成!"
+echo ""
+echo "生成的文件:"
+ls -la examples/*/*.docx 2>/dev/null || echo "  (无 docx 文件)"
+```
+
+```bash
+chmod +x examples/run_all_examples.sh
+```
+
+- [ ] **Step 9: 测试示例**
+
+运行所有示例验证：
+
+```bash
+bash examples/run_all_examples.sh
+```
+
+验证：
+1. 所有原始文档生成成功
+2. 所有 changes.md 转换成功
+3. 所有修订应用成功
+4. 生成的 docx 文件可正常打开
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add examples/ EXAMPLES.md
+git commit -m "docs: enhance examples with full end-to-end demonstrations"
+```
+
+---
+
 **计划完成！**
 
 执行选项：

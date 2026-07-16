@@ -100,6 +100,152 @@ Para 45: 修正拼写
 }
 ```
 
+## 示例设计要求
+
+每个示例**必须**包含以下五个部分，形成完整的端到端演示：
+
+### 1. 原始文档内容 (Original Content)
+
+展示原始 docx 文件中相关段落的文本内容，让用户理解修改的上下文。
+
+### 2. 生成原始文档的代码 (Generate Original Document Code)
+
+提供 Python 代码，让用户可以实际生成原始 docx 文件：
+
+```python
+#!/usr/bin/env python3
+"""生成示例的原始 docx 文档"""
+from docx import Document
+
+def create_original_doc():
+    doc = Document()
+    
+    # 添加段落
+    doc.add_paragraph('原始段落内容...')
+    
+    # 保存
+    doc.save('example_original.docx')
+    print('✅ 已生成: example_original.docx')
+
+if __name__ == '__main__':
+    create_original_doc()
+```
+
+### 3. 生成的 Changes Markdown (Generated Changes MD)
+
+展示 AI 根据原始内容生成的 changes.md 文件，体现极简原则和工具多样化原则。
+
+### 4. 生成的 JSON (Generated JSON)
+
+展示 md_to_json.py 转换后的 JSON 输出，让用户看到实际的数据结构。
+
+### 5. 应用修订的代码 (Apply Changes Code)
+
+提供 Python 代码，让用户可以实际应用修订：
+
+```python
+#!/usr/bin/env python3
+"""将修订应用到 docx 文档"""
+import json
+import sys
+sys.path.insert(0, 'scripts')
+from docx_revision import ComprehensiveDocxReviewer
+
+def apply_changes():
+    with open('changes.json') as f:
+        config = json.load(f)
+    
+    reviewer = ComprehensiveDocxReviewer(config['source'])
+    reviewer.apply_json_config(config)
+    reviewer.save(config['output'])
+    print(f'✅ 已生成修订文档: {config["output"]}')
+
+if __name__ == '__main__':
+    apply_changes()
+```
+
+### 6. 最终文档效果 (Final Document Effect)
+
+展示应用修订后 docx 的效果，包括：
+- Tracked changes 的显示效果
+- 批注的显示效果
+- 格式修改的效果
+
+### 完整运行流程
+
+```bash
+# 1. 生成原始文档
+python examples/example_n/create_original.py
+
+# 2. 转换 changes.md 到 JSON
+python scripts/md_to_json.py examples/example_n/changes.md examples/example_n/changes.json
+
+# 3. 应用修订
+python examples/example_n/apply_changes.py
+
+# 4. 查看结果
+ls -la example_n_*.docx
+```
+
+### 示例结构模板
+
+```markdown
+## Example N: [场景名称]
+
+### 原始文档
+
+**Para 8:**
+> The novel approach for flood monitoring method demonstrates significant improvements in accuracy compared to traditional techniques.
+
+**Para 15:**
+> As previously reported in our earlier studies, the results show significant correlation.
+
+### Changes Markdown
+
+\```markdown
+---
+author: Tiger
+source: paper.docx
+output: paper_revised.docx
+---
+
+# Text Edits
+
+Para 8: 修正术语
+将 "novel" 改为 "improved"
+将 "monitoring" 改为 "detection"
+
+Para 15: 删除冗余
+删除: "As previously reported in our earlier studies, "
+\```
+
+### 生成的 JSON
+
+\```json
+{
+  "author": "Tiger",
+  "source": "paper.docx",
+  "output": "paper_revised.docx",
+  "text_modifications": [
+    {"type": "replace", "paragraph_index": 8, "old_text": "novel", "new_text": "improved"},
+    {"type": "replace", "paragraph_index": 8, "old_text": "monitoring", "new_text": "detection"},
+    {"type": "delete", "paragraph_index": 15, "text": "As previously reported in our earlier studies, "}
+  ]
+}
+\```
+
+### 最终效果
+
+**Para 8 (Revised):**
+> The ~~novel~~ **improved** approach for flood ~~monitoring~~ **detection** method demonstrates significant improvements in accuracy compared to traditional techniques.
+
+**Para 15 (Revised):**
+> ~~As previously reported in our earlier studies,~~ the results show significant correlation.
+
+**批注:**
+> [T] 修正术语：novel → improved, monitoring → detection
+```
+
 ## 目录结构
 
 ```
