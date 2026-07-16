@@ -267,7 +267,7 @@ def parse_table_edits(lines):
     for line in lines:
         table_match = re.match(r'^表格(\d+):', line)
         if table_match:
-            current_table = int(table_match.group(1))
+            current_table = int(table_match.group(1)) - 1  # 转为0-based
             continue
         
         if current_table is None:

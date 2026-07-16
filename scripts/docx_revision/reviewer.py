@@ -1,3 +1,4 @@
+import copy
 import hashlib
 import base64
 import json
@@ -267,7 +268,7 @@ class ComprehensiveDocxReviewer:
         old_pPr = OxmlElement('w:pPr')
         for child in list(pPr):
             if child.tag != qn('w:pPrChange'):
-                old_pPr.append(child.__class__(child.tag, child.attrib))
+                old_pPr.append(copy.deepcopy(child))
         pPr_change.append(old_pPr)
         pPr.append(pPr_change)
 
