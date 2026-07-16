@@ -257,6 +257,78 @@ def parse_format_edits(lines):
     return edits
 
 
+def parse_table_edits(lines):
+    """解析 Table Edits section"""
+    edits = []
+    current_table = None
+    
+    cn_num = {'一':1, '二':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9, '十':10}
+    
+    for line in lines:
+        table_match = re.match(r'^表格(\d+):', line)
+        if table_match:
+            current_table = int(table_match.group(1))
+            continue
+        
+        if current_table is None:
+            continue
+        
+        # 第N行下方加一行
+        insert_match = re.match(r'^\s*第(\d+)行下方加一行', line)
+        if insert_match:
+            edits.append({
+                "type": "insert_row",
+                "table_index": current_table,
+                "row_index": int(insert_match.group(1)),
+                "author": None
+            })
+            continue
+        
+        # 删掉第N行
+        delete_match = re.match(r'^\s*删掉第(\d+)行', line)
+        if delete_match:
+            edits.append({
+                "type": "delete_row",
+                "table_index": current_table,
+                "row_index": int(delete_match.group(1)),
+                "author": None
+            })
+            continue
+        
+        # 合并第N行的X-Y列 (字母列)
+        merge_match = re.match(r'^\s*合并第(\d+)行的第?([A-Z])-([A-Z])列', line)
+        if merge_match:
+            row = int(merge_match.group(1)) - 1
+            start_col = ord(merge_match.group(2)) - ord('A')
+            end_col = ord(merge_match.group(3)) - ord('A')
+            edits.append({
+                "type": "merge_cells",
+                "table_index": current_table,
+                "start_cell": [row, start_col],
+                "end_cell": [row, end_col],
+                "author": None
+            })
+            continue
+        
+        # 合并第N行的X个格子 (自然语言/中文数字)
+        merge_natural = re.match(r'^\s*合并第?([一二三四五六七八九十\d]+)行的([一二三四五六七八九十\d]+)个格子', line)
+        if merge_natural:
+            row_str = merge_natural.group(1)
+            count_str = merge_natural.group(2)
+            row = (cn_num[row_str] if row_str in cn_num else int(row_str)) - 1
+            count = cn_num[count_str] if count_str in cn_num else int(count_str)
+            edits.append({
+                "type": "merge_cells",
+                "table_index": current_table,
+                "start_cell": [row, 0],
+                "end_cell": [row, count - 1],
+                "author": None
+            })
+            continue
+    
+    return edits
+
+
 def main():
     if len(sys.argv) < 3:
         print("用法: python md_to_json.py <input.md> <output.json>")
@@ -291,6 +363,9 @@ def main():
     
     if 'Format Edits' in sections:
         config["format_modifications"] = parse_format_edits(sections['Format Edits'])
+
+    if 'Table Edits' in sections:
+        config["table_modifications"] = parse_table_edits(sections['Table Edits'])
 
     if config["text_modifications"]:
         doc = Document(config["source"])
