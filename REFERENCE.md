@@ -4,7 +4,7 @@
 
 ## Core Design Principles
 
-### 1. Minimalism Principle (极简原则)
+### 1. Minimalism Principle
 
 **When generating JSON, do NOT replace whole sentences or paragraphs. Only replace key letters, words (phrases), or punctuation, and provide accurate positions whenever possible.**
 
@@ -18,10 +18,10 @@
 
 | Scenario | Wrong ❌ | Right ✅ |
 |----------|---------|----------|
-| Fix terminology | `将 "novel approach for flood monitoring method" 改为 "improved method for flood detection"` | `将 "novel" 改为 "improved"` + `将 "monitoring" 改为 "detection"` |
-| Delete redundancy | `删除: "as previously reported in our earlier studies"` | `删除: "as previously reported"` + `删除: "in our earlier studies"` |
-| Fix spelling | `将 "significantly differents results" 改为 "significantly different results"` | `将 "differents" 改为 "different"` |
-| Add content | `在开头插入: This is an important finding that needs to be highlighted.` | `在开头插入: Important: ` |
+| Fix terminology | `Replace "novel approach for flood monitoring method" with "improved method for flood detection"` | `Replace "novel" with "improved"` + `Replace "monitoring" with "detection"` |
+| Delete redundancy | `Delete "as previously reported in our earlier studies"` | `Delete "as previously reported"` + `Delete "in our earlier studies"` |
+| Fix spelling | `Replace "significantly differents results" with "significantly different results"` | `Replace "differents" with "different"` |
+| Add content | `Insert at start: This is an important finding that needs to be highlighted.` | `Insert at start: Important: ` |
 
 #### Position Requirement
 
@@ -29,13 +29,13 @@ When text appears multiple times in a paragraph, you **MUST** add position infor
 
 ```markdown
 # Wrong ❌ (ambiguous)
-删除: "the"
+Delete: "the"
 
 # Right ✅ (with position)
-删除: "the" (第15-18字符)
+Delete: "the" (chars 15-18)
 ```
 
-### 2. Tool Diversity Principle (工具多样化原则)
+### 2. Tool Diversity Principle
 
 **Do NOT only use replace. Use delete and insert tools as appropriate based on actual needs.**
 
@@ -43,24 +43,22 @@ When text appears multiple times in a paragraph, you **MUST** add position infor
 
 | Tool | Use Case | Example |
 |------|----------|---------|
-| **replace** | Modify existing text | `将 "old" 改为 "new"` |
-| **delete** | Remove redundant/incorrect content | `删除: "unnecessary text"` |
-| **insert** | Add missing content | `在开头插入: Note: ` |
+| **replace** | Modify existing text | `Replace "old" with "new"` |
+| **delete** | Remove redundant/incorrect content | `Delete: "unnecessary text"` |
+| **insert** | Add missing content | `Insert at start: Note: ` |
 
 #### When to Use delete + insert Instead of replace?
 
 | Scenario | Wrong ❌ | Right ✅ |
 |----------|---------|----------|
-| Delete entire paragraph | `将 "这是一段很长的内容..." 改为 ""` | `删除: "这是一段很长的内容..."` |
-| Insert at specific position | `将 "原文" 改为 "新内容 原文"` | `在开头插入: 新内容` |
-| Delete and reorganize | `将 "A, B, C" 改为 "A, C"` | `删除: ", B"` |
-| Add prefix/suffix | `将 "result" 改为 "Updated: result"` | `在开头插入: Updated: ` |
+| Delete entire paragraph | `Replace "This is a very long content..." with ""` | `Delete: "This is a very long content..."` |
+| Insert at specific position | `Replace "original" with "new content original"` | `Insert at start: new content` |
+| Delete and reorganize | `Replace "A, B, C" with "A, C"` | `Delete: ", B"` |
+| Add prefix/suffix | `Replace "result" with "Updated: result"` | `Insert at start: Updated: ` |
 
 ## Markdown Template Syntax
 
 ### Header
-
-The YAML frontmatter block defines metadata for the edit session.
 
 ```yaml
 ---
@@ -80,8 +78,6 @@ track_revisions: true
 
 ### Section Headers
 
-All edits are organized under section headers:
-
 ```markdown
 # Comments
 # Text Edits
@@ -96,28 +92,19 @@ All edits are organized under section headers:
 ```markdown
 Para {N}: {title}
 {comment text}
-> 选中范围: 第{start}-{end}字符
-> 缩写: {initials}
+> Selection range: chars {start}-{end}
+> Initials: {initials}
 ```
-
-- `Para {N}` — Paragraph number (0-indexed)
-- `选中范围` — Optional character range for comment anchoring
-- `缩写` — Optional author initials
 
 ### Text Edits
 
-```markdown
-Para {N}: {title}
-{edit instruction}
-```
-
 | Instruction | Description |
 |-------------|-------------|
-| `将 "{old}" 改为 "{new}"` | Replace text |
-| `在开头插入: {text}` | Insert at paragraph start |
-| `在末尾插入: {text}` | Insert at paragraph end |
-| `删除: "{text}"` | Delete text (no ambiguity) |
-| `删除: "{text}" (第{start}-{end}字符)` | Delete with position |
+| `Replace "{old}" with "{new}"` | Replace text |
+| `Insert at start: {text}` | Insert at paragraph start |
+| `Insert at end: {text}` | Insert at paragraph end |
+| `Delete: "{text}"` | Delete text (no ambiguity) |
+| `Delete: "{text}" (chars {start}-{end})` | Delete with position |
 
 ### Format Edits
 
@@ -128,127 +115,84 @@ Para {N}: {title}
 
 | Format | Example | Output Key |
 |--------|---------|------------|
-| Alignment | 居中对齐 | alignment: center |
-| Alignment | 左对齐 | alignment: left |
-| Alignment | 右对齐 | alignment: right |
-| Alignment | 两端对齐 | alignment: justified |
-| Bold | 加粗 | bold: true |
-| Italic | 斜体 | italic: true |
-| Underline | 下划线 | underline: true |
-| Line spacing | 行距1.5倍 | line_spacing: 1.5 |
-| Space before | 段前12pt | space_before: 12.0 |
-| Space after | 段后6pt | space_after: 6.0 |
-| Indent left | 左缩进36pt | indent_left: 36.0 |
-| Indent right | 右缩进12pt | indent_right: 12.0 |
-| Font size | 字号10pt | font_size: 10.0 |
-| Font name | 字体SimSun | font_name: SimSun |
+| Alignment | Center align | alignment: center |
+| Alignment | Left align | alignment: left |
+| Alignment | Right align | alignment: right |
+| Alignment | Justify | alignment: justified |
+| Bold | Bold | bold: true |
+| Italic | Italic | italic: true |
+| Underline | Underline | underline: true |
+| Line spacing | Line spacing 1.5 | line_spacing: 1.5 |
+| Space before | Space before 12pt | space_before: 12.0 |
+| Space after | Space after 6pt | space_after: 6.0 |
+| Indent left | Left indent 36pt | indent_left: 36.0 |
+| Indent right | Right indent 12pt | indent_right: 12.0 |
+| Font size | Font size 10pt | font_size: 10.0 |
+| Font name | Font SimSun | font_name: SimSun |
 
 ### Table Edits
 
 ```markdown
-表格{N}:
-  第{N}行下方加一行
-  删掉第{N}行
-  合并第{N}行的第{X}-{Y}列
-  合并第{N}行的{X}个格子
+Table {N}:
+  Insert row after row {N}
+  Delete row {N}
+  Merge columns {X}-{Y} in row {N}
+  Merge {X} cells in row {N}
 ```
-
-| Instruction | Description |
-|-------------|-------------|
-| `第{N}行下方加一行` | Insert row after row N |
-| `删掉第{N}行` | Delete row N |
-| `合并第{N}行的第{X}-{Y}列` | Merge columns X through Y in row N |
-| `合并第{N}行的{X}个格子` | Merge X cells in row N |
 
 Table indices are 1-based.
 
 ### Style Edits
 
 ```markdown
-{StyleName} 样式:
+{StyleName} style:
   {format1}, {format2}, ...
 ```
-
-Applies format changes to all paragraphs using the named style.
 
 ### Global Changes
 
 ```markdown
-将 "{old}" 改为 "{new}"
+Replace "{old}" with "{new}"
 ```
 
-Replace text globally across all paragraphs. No `Para {N}:` prefix needed.
+No `Para {N}:` prefix needed.
 
 ## Ambiguity Detection
 
-If text appears multiple times in a paragraph, position info is required:
+If text appears multiple times, add position:
 
 ```markdown
-删除: "text" (第15-18字符)
-将 "text" 改为 "text" (第20-25字符)
+Delete: "text" (chars 15-18)
 ```
-
-### Error Format
-
-When ambiguity is detected, the parser shows all occurrences:
-
-```
-歧义错误: "the" 在段落中出现 3 次:
-  第15-18字符
-  第42-45字符
-  第78-81字符
-请添加位置信息: (第N-M字符)
-```
-
-### Resolution
-
-Add the position specifier in parentheses to disambiguate:
-
-```markdown
-# Ambiguous (error)
-删除: "the"
-
-# Resolved (valid)
-删除: "the" (第42-45字符)
-```
-
-Position ranges are inclusive on both ends and 0-indexed.
 
 ## Error Handling
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| `歧义错误` | Text appears multiple times | Add `(第N-M字符)` position |
-| `找不到段落` | Invalid paragraph number | Check paragraph numbering with `list_paragraphs.py` |
-| `格式解析失败` | Invalid format keyword | Use keywords from the Format Edits table |
-| `表格索引越界` | Table/row index out of range | Verify table structure with `list_paragraphs.py` |
-| `缺少必要字段` | Missing header field | Add required fields: author, source, output |
-
-## Scripts
-
-| Script | Purpose |
-|--------|---------|
-| `scripts/list_paragraphs.py` | List docx paragraph structure with numbering |
-| `scripts/md_to_json.py` | Convert Markdown template to JSON for application |
+| `Ambiguity error` | Text appears multiple times | Add `(chars N-M)` position |
+| `Paragraph not found` | Invalid paragraph number | Check with `list_paragraphs.py` |
+| `Format parse failed` | Invalid format keyword | Use keywords from Format table |
+| `Table index out of range` | Index out of range | Verify with `list_paragraphs.py` |
+| `Missing required field` | Missing header field | Add: author, source, output |
 
 ## Quick Lookup
 
 | Task | Syntax |
 |------|--------|
-| Replace text | `将 "old" 改为 "new"` |
-| Insert at start | `在开头插入: text` |
-| Insert at end | `在末尾插入: text` |
-| Delete text | `删除: "text"` |
-| Bold paragraph | `Para N: 标题` then `加粗` |
-| Center align | `居中对齐` |
-| Set line spacing | `行距1.5倍` |
-| Set font size | `字号10pt` |
-| Add table row | `表格0:` then `第N行下方加一行` |
-| Delete table row | `表格0:` then `删掉第N行` |
-| Merge cells | `合并第N行的第X-Y列` |
-| Change style | `Normal 样式:` then format list |
-| Global replace | `将 "old" 改为 "new"` (no Para prefix) |
-| Add comment | `Para N: 标题` then comment text |
+| Replace text | `Replace "old" with "new"` |
+| Insert at start | `Insert at start: text` |
+| Insert at end | `Insert at end: text` |
+| Delete text | `Delete: "text"` |
+| Bold paragraph | `Para N: Title` then `Bold` |
+| Center align | `Center align` |
+| Set line spacing | `Line spacing 1.5` |
+| Set font size | `Font size 10pt` |
+| Add table row | `Table 0:` then `Insert row after row N` |
+| Delete table row | `Table 0:` then `Delete row N` |
+| Merge cells | `Merge columns X-Y in row N` |
+| Change style | `Normal style:` then format list |
+| Global replace | `Replace "old" with "new"` (no Para prefix) |
+| Add comment | `Para N: Title` then comment text |
 
 ---
 
@@ -314,8 +258,6 @@ Position ranges are inclusive on both ends and 0-indexed.
 
 ### Header
 
-YAML frontmatter 块定义编辑会话的元数据。
-
 ```yaml
 ---
 author: Name
@@ -333,8 +275,6 @@ track_revisions: true
 | `track_revisions` | 否 | 启用修订跟踪（默认：true） |
 
 ### Section Headers
-
-所有编辑都在 section headers 下组织：
 
 ```markdown
 # Comments
@@ -354,16 +294,7 @@ Para {N}: {title}
 > 缩写: {initials}
 ```
 
-- `Para {N}` — 段落编号（0-indexed）
-- `选中范围` — 可选的字符范围，用于批注锚定
-- `缩写` — 可选的作者缩写
-
 ### Text Edits
-
-```markdown
-Para {N}: {title}
-{edit instruction}
-```
 
 | Instruction | Description |
 |-------------|-------------|
@@ -407,13 +338,6 @@ Para {N}: {title}
   合并第{N}行的{X}个格子
 ```
 
-| Instruction | Description |
-|-------------|-------------|
-| `第{N}行下方加一行` | 在第 N 行下方插入一行 |
-| `删掉第{N}行` | 删除第 N 行 |
-| `合并第{N}行的第{X}-{Y}列` | 合并第 N 行的第 X 到 Y 列 |
-| `合并第{N}行的{X}个格子` | 合并第 N 行的 X 个单元格 |
-
 表格索引从 1 开始。
 
 ### Style Edits
@@ -423,15 +347,13 @@ Para {N}: {title}
   {format1}, {format2}, ...
 ```
 
-将格式更改应用于使用命名样式的所有段落。
-
 ### Global Changes
 
 ```markdown
 将 "{old}" 改为 "{new}"
 ```
 
-在所有段落中全局替换文本。不需要 `Para {N}:` 前缀。
+不需要 `Para {N}:` 前缀。
 
 ## 歧义检测
 
@@ -439,51 +361,17 @@ Para {N}: {title}
 
 ```markdown
 删除: "text" (第15-18字符)
-将 "text" 改为 "text" (第20-25字符)
 ```
-
-### Error Format
-
-当检测到歧义时，解析器显示所有出现位置：
-
-```
-歧义错误: "the" 在段落中出现 3 次:
-  第15-18字符
-  第42-45字符
-  第78-81字符
-请添加位置信息: (第N-M字符)
-```
-
-### Resolution
-
-在括号中添加位置说明符以消除歧义：
-
-```markdown
-# 有歧义（错误）
-删除: "the"
-
-# 已解决（有效）
-删除: "the" (第42-45字符)
-```
-
-位置范围两端都包含，且从 0 开始。
 
 ## 错误处理
 
 | Error | Cause | Fix |
 |-------|-------|-----|
 | `歧义错误` | 文本多次出现 | 添加 `(第N-M字符)` 位置 |
-| `找不到段落` | 无效的段落编号 | 使用 `list_paragraphs.py` 检查段落编号 |
-| `格式解析失败` | 无效的格式关键词 | 使用 Format Edits 表中的关键词 |
-| `表格索引越界` | 表格/行索引超出范围 | 使用 `list_paragraphs.py` 验证表格结构 |
-| `缺少必要字段` | 缺少 header 字段 | 添加必需字段：author, source, output |
-
-## 脚本
-
-| Script | Purpose |
-|--------|---------|
-| `scripts/list_paragraphs.py` | 列出带编号的 docx 段落结构 |
-| `scripts/md_to_json.py` | 将 Markdown 模板转换为 JSON 以供应用 |
+| `找不到段落` | 无效的段落编号 | 使用 `list_paragraphs.py` 检查 |
+| `格式解析失败` | 无效的格式关键词 | 使用 Format 表中的关键词 |
+| `表格索引越界` | 索引超出范围 | 使用 `list_paragraphs.py` 验证 |
+| `缺少必要字段` | 缺少 header 字段 | 添加：author, source, output |
 
 ## 快速查找
 

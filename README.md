@@ -266,9 +266,9 @@ python apply_changes.py        # Apply changes
 
 ## Documentation
 
-- [REFERENCE.md](REFERENCE.md) - Full syntax reference
-- [EXAMPLES.md](EXAMPLES.md) - Additional examples and patterns
+- [REFERENCE.md](REFERENCE.md) - Full syntax reference (bilingual)
 - [SKILL.md](SKILL.md) - OpenCode skill definition
+- [examples/](examples/) - 4 working examples
 
 ## Scripts
 
@@ -556,9 +556,9 @@ python apply_changes.py        # 应用修改
 
 ## 文档
 
-- [REFERENCE.md](REFERENCE.md) - 完整语法参考
-- [EXAMPLES.md](EXAMPLES.md) - 更多示例和模式
+- [REFERENCE.md](REFERENCE.md) - 完整语法参考（双语）
 - [SKILL.md](SKILL.md) - OpenCode 技能定义
+- [examples/](examples/) - 4 个工作示例
 
 ## 脚本
 
