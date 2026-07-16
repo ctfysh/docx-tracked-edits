@@ -7,62 +7,102 @@ description: Edit docx files with tracked changes and comments using AI. Generat
 
 ## Quick Start
 
-1. **Read source docx** to understand paragraph structure
+1. **Read source docx** to understand paragraph structure:
+   ```bash
+   python scripts/list_paragraphs.py paper.docx
+   ```
+
 2. **Generate changes.md** using the template below
-3. **Convert to JSON**: `python scripts/md_to_json.py changes.md changes.json`
-4. **Apply to docx**: Use docx_revision package to generate revised document
+
+3. **Convert to JSON**:
+   ```bash
+   python scripts/md_to_json.py changes.md changes.json
+   ```
+
+4. **Apply to docx** (using docx_revision):
+   ```python
+   import json
+   from scripts.docx_revision import ComprehensiveDocxReviewer
+   
+   with open('changes.json') as f:
+       config = json.load(f)
+   
+   reviewer = ComprehensiveDocxReviewer(config['source'])
+   reviewer.apply_json_config(config)
+   reviewer.save(config['output'])
+   ```
 
 ## Changes Markdown Template
 
 ```markdown
 ---
 author: Tiger
-source: path/to/source.docx
-output: path/to/output.docx
+source: paper.docx
+output: paper_revised.docx
+track_revisions: true
 ---
 
 # Comments
 
-## [P24] 方法论创新建议
-此处列出的三项"进展"表述清晰但部分重叠——尤其是进展二与进展三均涉及政策解读层面。建议进一步明确区分：进展一聚焦方法论创新（SFA–BSTS整合），进展二聚焦政策归因（BSTS反事实分析），进展三聚焦管理启示。
-
-## [P88] 数据说明
-Long-term ambient TP concentration provides an independent water-quality reference.
+Para 24: 方法论建议
+此处列出的三项"进展"表述清晰但部分重叠...
+> 选中范围: 第10-50字符
+> 缩写: T
 
 ---
 
-# Changes
+# Text Edits
 
-## [P16] Title fix
-REPLACE: `grand challenge` → `major challenge`
-REPLACE: `Erhai Lake Basin–a vulnerable` → `Erhai Lake Basin, a vulnerable`
+Para 8: 标题修正
+将 "novel approach" 改为 "improved method"
 
-## [P20] Example references
-REPLACE: `like Lake Taihu` → `such as Lake Taihu`
+Para 23: 补充内容
+在开头插入: Updated: 
+在末尾插入: (validated)
 
-## [P24] Abstract improvements
-REPLACE: `advances ` → `makes `
-REPLACE: `three transformative contributions` → `three analytical advances`
+Para 67: 删除冗余
+删除: "as previously reported"
 
-## [P58] MC validation note
-APPEND: The convergence of the posterior probability of the local linear trend supports the validity of the MC approximation.
+Para 82: 删除有歧义
+删除: "the" (第15-18字符)
 
-## [P83] Grammar fix
-REPLACE: `A much clearer reduction after 2017` → `was observed after the 2017`
+---
 
-## [P139] Limitations expansion
-REPLACE: `Several limitations should also be noted. First, the SFA framework` → `Several limitations should also be noted. First, while our BSTS model controls for observed covariates, unmeasured confounders may bias the estimated policy effects. In addition, the SFA framework`
+# Format Edits
+
+Para 12: 段落格式
+居中对齐, 行距1.5倍, 段前12pt
+
+Para 45-48: 缩进
+左缩进36pt
+
+---
+
+# Table Edits
+
+表格0:
+  第2行下方加一行
+  删掉第5行
+  合并第二行的三个格子
+
+---
+
+# Style Edits
+
+Normal 样式:
+  段前6pt, 段后6pt
+
+Heading1 样式:
+  字号16pt, 加粗
 
 ---
 
 # Global Changes
 
-REPLACE: `remains a major challenge for` → `remains a challenge for`
-REPLACE: `Results reveal a distinct` → `Results show a`
-REPLACE: `This framework advances pathway-based` → `This framework supports pathway-based`
+将全文 "significant difference" 改为 "statistically significant difference"
 ```
 
-## Template Syntax
+## Syntax Reference
 
 ### Header (YAML frontmatter)
 | Field | Required | Description |
@@ -70,128 +110,69 @@ REPLACE: `This framework advances pathway-based` → `This framework supports pa
 | author | Yes | Default author for all changes |
 | source | Yes | Path to source docx file |
 | output | Yes | Path for output docx file |
+| track_revisions | No | Enable tracked changes (default: true) |
 
-### Comment Format
+### Comments
 ```markdown
-## [P{paragraph_index}] {title}
+Para {N}: {title}
 {comment text}
-```
-- `P24` = paragraph index 24 (0-based)
-- Title is for readability only, not used in output
-
-### Change Formats
-
-**Replace text:**
-```markdown
-REPLACE: `old text` → `new text`
+> 选中范围: 第{start}-{end}字符
+> 缩写: {initials}
 ```
 
-**Insert text (append to paragraph):**
+### Text Edits
+- **Replace**: `将 "{old}" 改为 "{new}"`
+- **Insert at start**: `在开头插入: {text}`
+- **Insert at end**: `在末尾插入: {text}`
+- **Delete**: `删除: "{text}"` or `删除: "{text}" (第{start}-{end}字符)`
+
+### Format Edits
 ```markdown
-APPEND: Text to insert at end of paragraph.
+Para {N}: {title}
+{format1}, {format2}, ...
 ```
 
-**Insert text at position:**
+Supported formats:
+- 居中对齐, 左对齐, 右对齐, 两端对齐
+- 加粗, 斜体
+- 行距{N}倍, 段前{N}pt, 段后{N}pt
+- 左缩进{N}pt, 右缩进{N}pt
+- 字号{N}pt
+
+### Table Edits
 ```markdown
-INSERT@0: Text to insert at beginning.
+表格{N}:
+  第{N}行下方加一行
+  删掉第{N}行
+  合并第{N}行的{X}-{Y}列
+  合并第{N}行的{X}个格子
 ```
 
-**Delete text:**
+### Style Edits
 ```markdown
-DELETE: `text to remove`
+{StyleName} 样式:
+  {format1}, {format2}, ...
 ```
 
 ### Global Changes
-Apply to entire document (auto-resolve paragraph index):
 ```markdown
-# Global Changes
-REPLACE: `old text` → `new text`
+将 "{old}" 改为 "{new}"
 ```
+
+## Ambiguity Detection
+
+If text appears multiple times in a paragraph, the script will show an error with all positions and ask you to add position information.
 
 ## Workflows
 
-### 1. AI-Generated Edits
-
-1. User provides docx file and editing instructions
-2. AI reads docx to understand paragraph structure
-3. AI generates `changes.md` following template
-4. Run conversion: `python scripts/md_to_json.py changes.md changes.json`
-5. Apply: Use docx_revision package
-
-### 2. Manual Specification
-
-1. User creates `changes.md` manually
-2. Run conversion script
-3. Review generated JSON
-4. Apply to docx
-
-### 3. Batch Processing
-
-```bash
-# Convert multiple files
-for f in changes_*.md; do
-  python scripts/md_to_json.py "$f" "${f%.md}.json"
-done
-
-# Apply each
-for json in changes_*.json; do
-  python -c "
-import json
-from docx_revision import ComprehensiveDocxReviewer
-with open('$json') as f: cfg = json.load(f)
-r = ComprehensiveDocxReviewer(cfg['source'])
-r.apply_json_config(cfg)
-r.save(cfg['output'])
-"
-done
-```
+1. Read source docx (using list_paragraphs.py or directly)
+2. Generate changes.md
+3. Run `md_to_json.py changes.md changes.json`
+4. If ambiguity error, resolve with user and regenerate MD
+5. Apply to docx
 
 ## Scripts
 
+- `scripts/list_paragraphs.py` - List docx paragraph structure
 - `scripts/md_to_json.py` - Convert Markdown to docx_revision JSON
-- `scripts/validate_json.py` - Validate JSON against docx_revision schema
-
-## Integration with docx_revision
-
-```python
-import json
-from docx_revision import ComprehensiveDocxReviewer
-
-# Load converted config
-with open('changes.json') as f:
-    config = json.load(f)
-
-# Apply changes
-reviewer = ComprehensiveDocxReviewer(config['source'])
-reviewer.apply_json_config(config)
-reviewer.save(config['output'])
-```
-
-## Common Patterns
-
-### Academic Paper Review
-```markdown
-## [P15] Abstract clarity
-REPLACE: `This framework advances` → `This framework supports`
-
-## [P42] Methodology note
-APPEND: These results should be interpreted with caution due to the limited sample size.
-```
-
-### Business Document Update
-```markdown
-## [P5] Q4 targets
-REPLACE: `20% growth` → `25% growth`
-
-## [P12] Deadline extension
-INSERT@0: Updated: 
-```
-
-### Legal Contract Revision
-```markdown
-## [P8] Liability clause
-DELETE: `notwithstanding any other provision`
-
-## [P15] Term extension
-REPLACE: `12 months` → `24 months`
-```
+- `scripts/docx_revision/` - Bundled docx_revision package
