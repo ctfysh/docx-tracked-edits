@@ -2,6 +2,8 @@
 
 # Docx Tracked Edits
 
+![English Poster](asserts/poster-en.png)
+
 AI-driven docx editing with tracked changes. Tell AI what to change in natural language, and get a Word document with revision marks automatically.
 
 Compatible with OpenCode, Claude Code, Codex, and other AI coding assistants.
@@ -231,6 +233,8 @@ MIT
 ---
 
 # Docx 修订编辑
+
+![中文海报](asserts/poster-zh.png)
 
 AI 驱动的 docx 修订模式编辑。用自然语言告诉 AI 想要修改什么，自动生成带有修订标记的 Word 文档。
 
