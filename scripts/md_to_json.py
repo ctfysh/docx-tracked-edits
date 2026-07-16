@@ -33,6 +33,53 @@ def parse_sections(body):
     
     return sections
 
+def parse_comments(lines):
+    """解析 Comments section"""
+    comments = []
+    current = None
+    
+    for line in lines:
+        # 匹配 "Para N: title" 或 "Para N: title (范围)"
+        match = re.match(r'^Para\s+(\d+):\s*(.+)', line)
+        if match:
+            if current:
+                comments.append(current)
+            current = {
+                "paragraph_index": int(match.group(1)),
+                "text": "",
+                "author": None,
+                "initials": None,
+                "start_pos": None,
+                "end_pos": None
+            }
+            continue
+        
+        # 匹配范围信息
+        range_match = re.match(r'^>\s*选中范围:\s*第(\d+)-(\d+)字符', line)
+        if range_match and current:
+            current["start_pos"] = int(range_match.group(1))
+            current["end_pos"] = int(range_match.group(2))
+            continue
+        
+        # 匹配缩写
+        initials_match = re.match(r'^>\s*缩写:\s*(\w+)', line)
+        if initials_match and current:
+            current["initials"] = initials_match.group(1)
+            continue
+        
+        # 普通文本行
+        if current and line.strip() and not line.startswith('>'):
+            if current["text"]:
+                current["text"] += "\n" + line.strip()
+            else:
+                current["text"] = line.strip()
+    
+    if current:
+        comments.append(current)
+    
+    return comments
+
+
 def main():
     if len(sys.argv) < 3:
         print("用法: python md_to_json.py <input.md> <output.json>")
@@ -58,6 +105,9 @@ def main():
         "table_modifications": [],
         "style_modifications": []
     }
+    
+    if 'Comments' in sections:
+        config["comments"] = parse_comments(sections['Comments'])
     
     json_path.write_text(json.dumps(config, indent=2, ensure_ascii=False), encoding='utf-8')
     print(f"✅ 已生成: {json_path}")
