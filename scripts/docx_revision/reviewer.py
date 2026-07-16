@@ -223,18 +223,20 @@ class ComprehensiveDocxReviewer:
                                    new_text: str,
                                    author: str = "Reviewer",
                                    delete_color: Tuple[int, int, int] = (255, 0, 0),
-                                   insert_color: Tuple[int, int, int] = (0, 0, 255)) -> Tuple[int, int]:
+                                   insert_color: Tuple[int, int, int] = (0, 0, 255),
+                                   start_pos: Optional[int] = None,
+                                   end_pos: Optional[int] = None) -> Tuple[int, int]:
         if paragraph_index >= len(self.document.paragraphs):
             raise ValueError(f"段落索引 {paragraph_index} 超出范围")
 
         paragraph = self.document.paragraphs[paragraph_index]
         full_text = paragraph.text
 
-        if old_text not in full_text:
-            raise ValueError(f"未找到文本: {old_text}")
-
-        start_pos = full_text.index(old_text)
-        end_pos = start_pos + len(old_text)
+        if start_pos is None or end_pos is None:
+            if old_text not in full_text:
+                raise ValueError(f"未找到文本: {old_text}")
+            start_pos = full_text.index(old_text)
+            end_pos = start_pos + len(old_text)
 
         del_id = self.delete_text_with_tracking(
             paragraph_index, start_pos, end_pos, author, delete_color
@@ -548,8 +550,8 @@ class ComprehensiveDocxReviewer:
                 comment_text=comment['text'],
                 start_pos=comment.get('start_pos'),
                 end_pos=comment.get('end_pos'),
-                author=comment.get('author', 'Reviewer'),
-                initials=comment.get('initials', 'RV')
+                author=comment.get('author') or 'Reviewer',
+                initials=comment.get('initials') or 'RV'
             )
 
         for mod in cfg.get('text_modifications', []):
@@ -560,7 +562,7 @@ class ComprehensiveDocxReviewer:
                     paragraph_index=mod['paragraph_index'],
                     text=mod['text'],
                     position=mod.get('position'),
-                    author=mod.get('author', 'Reviewer'),
+                    author=mod.get('author') or 'Reviewer',
                     color=tuple(mod.get('color', [0, 0, 255]))
                 )
             elif mod_type == 'delete':
@@ -581,7 +583,7 @@ class ComprehensiveDocxReviewer:
                     paragraph_index=mod['paragraph_index'],
                     start_pos=start_pos,
                     end_pos=end_pos,
-                    author=mod.get('author', 'Reviewer'),
+                    author=mod.get('author') or 'Reviewer',
                     color=tuple(mod.get('color', [255, 0, 0]))
                 )
             elif mod_type == 'replace':
@@ -589,9 +591,11 @@ class ComprehensiveDocxReviewer:
                     paragraph_index=mod['paragraph_index'],
                     old_text=mod['old_text'],
                     new_text=mod['new_text'],
-                    author=mod.get('author', 'Reviewer'),
+                    author=mod.get('author') or 'Reviewer',
                     delete_color=tuple(mod.get('delete_color', [255, 0, 0])),
-                    insert_color=tuple(mod.get('insert_color', [0, 0, 255]))
+                    insert_color=tuple(mod.get('insert_color', [0, 0, 255])),
+                    start_pos=mod.get('start_pos'),
+                    end_pos=mod.get('end_pos'),
                 )
             # ponytail: removed 'move' type - stubs had no effect
 
@@ -600,7 +604,7 @@ class ComprehensiveDocxReviewer:
                 self.change_paragraph_format_with_tracking(
                     paragraph_index=fmt['paragraph_index'],
                     format_changes=fmt['changes'],
-                    author=fmt.get('author', 'Reviewer')
+                    author=fmt.get('author') or 'Reviewer'
                 )
             # ponytail: removed 'text' scope - rPrChange was never appended to XML
 
@@ -609,20 +613,20 @@ class ComprehensiveDocxReviewer:
                 self.insert_table_row_with_tracking(
                     table_index=tbl_mod['table_index'],
                     row_index=tbl_mod['row_index'],
-                    author=tbl_mod.get('author', 'Reviewer')
+                    author=tbl_mod.get('author') or 'Reviewer'
                 )
             elif tbl_mod['type'] == 'delete_row':
                 self.delete_table_row_with_tracking(
                     table_index=tbl_mod['table_index'],
                     row_index=tbl_mod['row_index'],
-                    author=tbl_mod.get('author', 'Reviewer')
+                    author=tbl_mod.get('author') or 'Reviewer'
                 )
             elif tbl_mod['type'] == 'merge_cells':
                 self.merge_cells_with_tracking(
                     table_index=tbl_mod['table_index'],
                     start_cell=tuple(tbl_mod['start_cell']),
                     end_cell=tuple(tbl_mod['end_cell']),
-                    author=tbl_mod.get('author', 'Reviewer')
+                    author=tbl_mod.get('author') or 'Reviewer'
                 )
 
         for style_mod in cfg.get('style_modifications', []):
@@ -630,7 +634,7 @@ class ComprehensiveDocxReviewer:
                 style_name=style_mod['style_name'],
                 style_type=style_mod.get('style_type', 'paragraph'),
                 format_changes=style_mod.get('changes', {}),
-                author=style_mod.get('author', 'Reviewer')
+                author=style_mod.get('author') or 'Reviewer'
             )
 
         print("✅ JSON配置应用完成")

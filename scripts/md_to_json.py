@@ -19,8 +19,23 @@ def check_ambiguity(edit, doc):
     para_text = doc.paragraphs[para_idx].text
     old_text = edit.get("old_text") or edit.get("text")
 
+    # 如果已提供位置信息，验证位置有效性而不是检查歧义
+    start_pos = edit.get('start_pos')
+    end_pos = edit.get('end_pos')
+    if start_pos is not None and end_pos is not None:
+        if start_pos < 0 or end_pos > len(para_text):
+            return f"位置 {start_pos}-{end_pos} 超出段落长度 ({len(para_text)})"
+        actual = para_text[start_pos:end_pos]
+        if actual != old_text:
+            msg = (f"位置 {start_pos}-{end_pos} 的文本 \"{actual}\" "
+                   f"与预期 \"{old_text[:50]}\" 不匹配")
+            if actual == old_text[:len(actual)]:
+                msg += f"\n  提示: 可能是旧文本长度不精确，预期 {len(old_text)} 字符但位置范围只有 {end_pos - start_pos} 字符"
+            return msg
+        return None
+
     if old_text not in para_text:
-        return f"文本 '{old_text[:30]}...' 未在段落 {para_idx} 中找到"
+        return f"文本 \"{old_text[:50]}...\" 未在段落 {para_idx} 中找到"
 
     count = para_text.count(old_text)
     if count > 1:
@@ -34,7 +49,11 @@ def check_ambiguity(edit, doc):
             start = pos + 1
 
         pos_str = "\n".join([f"  位置{i+1}: 第{p[0]}-{p[1]}字符" for i, p in enumerate(positions)])
-        return f"⚠️ 歧义检测: \"{old_text[:30]}...\" 在段落 {para_idx} 出现{count}次\n{pos_str}\n\n请在 MD 中添加位置信息:\n  删除: \"{old_text}\" (第{positions[0][0]}-{positions[0][1]}字符)"
+        return (f"⚠️ 歧义检测: \"{old_text[:50]}...\" 在段落 {para_idx} 出现{count}次\n"
+                f"{pos_str}\n\n"
+                f"请在 MD 中添加位置信息:\n"
+                f"  删除: \"{old_text}\" (第{positions[0][0]}-{positions[0][1]}字符)\n"
+                f"  将 \"{old_text}\" 改为 \"新内容\" (第{positions[0][0]}-{positions[0][1]}字符)")
 
     return None
 
@@ -130,20 +149,26 @@ def parse_text_edits(lines):
         if current_para is None:
             continue
         
-        # 替换: 将 "old" 改为 "new"
-        replace_match = re.match(r'^将\s*"(.+?)"\s*改为\s*"(.+?)"', line)
+        # 替换: 将 "old" 改为 "new" (可选位置: 第N-M字符)
+        replace_match = re.match(
+            r'^将\s*"(.+?)"\s*改为\s*"(.+?)"(?:\s*\(第(\d+)-(\d+)字符\))?', line
+        )
         if replace_match:
-            edits.append({
+            edit = {
                 "type": "replace",
                 "paragraph_index": current_para,
                 "old_text": replace_match.group(1),
                 "new_text": replace_match.group(2),
                 "author": None
-            })
+            }
+            if replace_match.group(3):
+                edit["start_pos"] = int(replace_match.group(3))
+                edit["end_pos"] = int(replace_match.group(4))
+            edits.append(edit)
             continue
         
         # 插入: 在开头/末尾插入: text
-        insert_match = re.match(r'^在(开头|末尾)插入:\s*(.+)', line)
+        insert_match = re.match(r'^在(开头|末尾)插入:\s(.+)', line)
         if insert_match:
             position = 0 if insert_match.group(1) == '开头' else None
             edits.append({
