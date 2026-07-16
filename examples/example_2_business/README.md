@@ -1,4 +1,53 @@
-# Example 2: 商业报告
+[English](#example-2-business-report) | [中文](#example-2-1)
+
+# Example 2: Business Report
+
+Demonstrates a complete business report workflow: text updates, table edits (insert/delete rows), and format adjustments.
+
+## File Description
+
+| File | Description |
+|------|-------------|
+| `create_original.py` | Generate original docx (with 5-row sales data table) |
+| `changes.md` | Edit instructions (text + table + format) |
+| `apply_changes.py` | Apply revisions, generate revised docx |
+
+## Demonstrated Edit Types
+
+- **replace** — Update year (2023→2024) and amount ($1.2M→$1.5M)
+- **insert_row** — Insert new row after row 2 in table
+- **delete_row** — Delete row 5 in table
+- **format** — Title center align + bold
+
+## Tool Diversity in Action
+
+- **replace**: Text replacement (year, amount)
+- **insert**: Table row insertion
+- **delete**: Table row deletion
+
+## How to Run
+
+```bash
+# 1. Generate original document
+python examples/example_2_business/create_original.py
+
+# 2. Apply revisions (auto-convert MD → JSON → docx)
+python examples/example_2_business/apply_changes.py
+```
+
+## Minimalism Principle in Action
+
+All replacements are precise word/number-level modifications:
+- `2023` → `2024` (year update)
+- `$1.2M` → `$1.5M` (amount update)
+
+No whole-sentence or whole-paragraph rewrites.
+
+---
+
+[English](#example-2-business-report) | [中文](#example-2-1)
+
+# 示例 2：商业报告
 
 演示商业报告场景的完整工作流：文本更新、表格编辑（插入/删除行）、格式修改。
 

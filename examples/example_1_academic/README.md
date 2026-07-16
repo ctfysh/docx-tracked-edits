@@ -1,4 +1,49 @@
-# Example 1: 学术论文编辑
+[English](#example-1-academic-paper-editing) | [中文](#example-1-1)
+
+# Example 1: Academic Paper Editing
+
+Demonstrates a complete academic paper review workflow: terminology fixes, redundancy removal, typo corrections, comments, and format adjustments.
+
+## File Description
+
+| File | Description |
+|------|-------------|
+| `create_original.py` | Generate original docx (21-paragraph academic paper structure) |
+| `changes.md` | Edit instructions (following minimalism principle) |
+| `apply_changes.py` | Apply revisions, generate revised docx |
+
+## Demonstrated Edit Types
+
+- **replace** — Multiple small replacements (novel→improved, monitoring→detection, demonstrates→shows)
+- **delete** — Remove redundant opening ("As previously reported in our earlier studies, ")
+- **Fix repetition** — "The the" → "The"
+- **comment** — Add terminology suggestion comment on Para 8
+- **format** — Para 8 center align + bold
+
+## How to Run
+
+```bash
+# 1. Generate original document
+python examples/example_1_academic/create_original.py
+
+# 2. Apply revisions (auto-convert MD → JSON → docx)
+python examples/example_1_academic/apply_changes.py
+```
+
+## Minimalism Principle in Action
+
+All replacements are word-level precise modifications, no whole-sentence or whole-paragraph replacements:
+- `novel` → `improved` (1 word)
+- `monitoring` → `detection` (1 word)
+- `demonstrates` → `shows` (1 word)
+- `The the` → `The` (fix repetition)
+- Delete redundant phrase instead of rewriting entire paragraph
+
+---
+
+[English](#example-1-academic-paper-editing) | [中文](#example-1-1)
+
+# 示例 1：学术论文编辑
 
 演示学术论文审阅场景的完整工作流：术语修正、冗余删除、重复词修复、批注和格式修改。
 

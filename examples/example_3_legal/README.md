@@ -1,4 +1,55 @@
-# Example 3: 法律文档修订
+[English](#example-3-legal-document) | [中文](#example-3-1)
+
+# Example 3: Legal Document Revision
+
+Demonstrates a complete legal contract revision workflow: date/amount updates, clause deletion, definition insertion, risk comments, and format adjustments.
+
+## File Description
+
+| File | Description |
+|------|-------------|
+| `create_original.py` | Generate original docx (21-paragraph legal contract structure) |
+| `changes.md` | Edit instructions (following minimalism + tool diversity principles) |
+| `apply_changes.py` | Apply revisions, generate revised docx |
+
+## Demonstrated Edit Types
+
+- **replace** — Precise date (2023→2024) and amount (伍万→捌万) updates
+- **delete** — Remove outdated force majeure clause
+- **insert** — Insert definition clause at contract beginning
+- **comment** — Add risk warning comment on dispute resolution clause
+- **format** — Title center align + bold
+
+## Tool Diversity in Action
+
+This example uses all four edit tools:
+- **replace**: Para 8 date update, Para 12 amount update
+- **delete**: Para 18 remove outdated force majeure clause
+- **insert**: Para 3 insert definition clause at beginning
+- **comment**: Para 15 flag risk in dispute resolution clause
+
+## How to Run
+
+```bash
+# 1. Generate original document
+python examples/example_3_legal/create_original.py
+
+# 2. Apply revisions (auto-convert MD → JSON → docx)
+python examples/example_3_legal/apply_changes.py
+```
+
+## Minimalism Principle in Action
+
+All replacements are minimal unit precise modifications:
+- `2023年12月31日` → `2024年12月31日` (only change year)
+- `伍万元整` → `捌万元整` (only change amount number)
+- `¥50,000.00` → `¥80,000.00` (only change numbers)
+
+---
+
+[English](#example-3-legal-document) | [中文](#example-3-1)
+
+# 示例 3：法律文档修订
 
 演示法律合同修订场景的完整工作流：日期金额更新、条款删除、定义插入、风险批注和格式修改。
 
