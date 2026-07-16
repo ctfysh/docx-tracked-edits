@@ -7,126 +7,50 @@ description: Edit docx files with tracked changes and comments using AI. Generat
 
 ## Quick Start
 
-1. **Read source docx** to understand paragraph structure:
-   ```bash
-   python scripts/list_paragraphs.py paper.docx
-   ```
-
-2. **Generate changes.md** using the template below
-
-3. **Convert to JSON**:
-   ```bash
-   python scripts/md_to_json.py changes.md changes.json
-   ```
-
-4. **Apply to docx** (using docx_revision):
-   ```python
-   import json
-   from scripts.docx_revision import ComprehensiveDocxReviewer
-   
-   with open('changes.json') as f:
-       config = json.load(f)
-   
-   reviewer = ComprehensiveDocxReviewer(config['source'])
-   reviewer.apply_json_config(config)
-   reviewer.save(config['output'])
-   ```
-
-## Core Design Principles
-
-### 1. Minimalism Principle
-
-**When generating JSON, do NOT replace whole sentences or paragraphs. Only replace key letters, words (phrases), or punctuation, and provide accurate positions whenever possible.**
-
-#### Why?
-
-- **Clearer revision history**: Users can see exactly what changed, not entire paragraphs marked as deleted/added
-- **More precise review**: Reviewers can check changes word by word/phrase by phrase
-- **Fewer conflicts**: Smaller changes are easier to merge in collaborative editing
-
-#### Examples
-
-| Scenario | Wrong ❌ | Right ✅ |
-|----------|---------|----------|
-| Fix terminology | `Replace "novel approach for flood monitoring method" with "improved method for flood detection"` | `Replace "novel" with "improved"` + `Replace "monitoring" with "detection"` |
-| Delete redundancy | `Delete "as previously reported in our earlier studies"` | `Delete "as previously reported"` + `Delete "in our earlier studies"` |
-| Fix spelling | `Replace "significantly differents results" with "significantly different results"` | `Replace "differents" with "different"` |
-| Add content | `Insert at start: This is an important finding that needs to be highlighted.` | `Insert at start: Important: ` |
-
-#### Position Requirement
-
-When text appears multiple times in a paragraph, you **MUST** add position information:
-
-```markdown
-# Wrong ❌ (ambiguous)
-Delete: "the"
-
-# Right ✅ (with position)
-Delete: "the" (chars 15-18)
+1. **List paragraphs**: `python scripts/list_paragraphs.py paper.docx`
+2. **Write changes.md** (see template below)
+3. **Convert**: `python scripts/md_to_json.py changes.md changes.json`
+4. **Apply**:
+```python
+import json
+from scripts.docx_revision import ComprehensiveDocxReviewer
+with open('changes.json') as f: config = json.load(f)
+reviewer = ComprehensiveDocxReviewer(config['source'])
+reviewer.apply_json_config(config)
+reviewer.save(config['output'])
 ```
 
-### 2. Tool Diversity Principle
+## Core Principles
 
-**Do NOT only use replace. Use delete and insert tools as appropriate based on actual needs.**
+### Minimalism
+Replace key words/phrases only, NOT whole sentences. Provide positions when text appears multiple times.
 
-#### Three Tools and Their Use Cases
+| Wrong ❌ | Right ✅ |
+|---------|----------|
+| `Replace "novel approach for flood monitoring method" with "improved method"` | `Replace "novel" with "improved"` + `Replace "monitoring" with "detection"` |
+| `Delete "as previously reported in our earlier studies"` | `Delete "as previously reported"` + `Delete "in our earlier studies"` |
 
-| Tool | Use Case | Example |
-|------|----------|---------|
-| **replace** | Modify existing text | `Replace "old" with "new"` |
-| **delete** | Remove redundant/incorrect content | `Delete: "unnecessary text"` |
-| **insert** | Add missing content | `Insert at start: Note: ` |
+### Tool Diversity
+Use delete/insert when appropriate, not just replace.
 
-#### When to Use delete + insert Instead of replace?
+| Wrong ❌ | Right ✅ |
+|---------|----------|
+| `Replace "long content..." with ""` | `Delete: "long content..."` |
+| `Replace "original" with "new original"` | `Insert at start: new content` |
 
-| Scenario | Wrong ❌ | Right ✅ |
-|----------|---------|----------|
-| Delete entire paragraph | `Replace "This is a very long content..." with ""` | `Delete: "This is a very long content..."` |
-| Insert at specific position | `Replace "original" with "new content original"` | `Insert at start: new content` |
-| Delete and reorganize | `Replace "A, B, C" with "A, C"` | `Delete: ", B"` |
-| Add prefix/suffix | `Replace "result" with "Updated: result"` | `Insert at start: Updated: ` |
-
-#### Combined Example
-
-```markdown
-# Text Edits
-
-Para 15: Fix terminology
-Replace "novel" with "improved"
-
-Para 23: Remove redundancy
-Delete: "as previously reported"
-
-Para 32: Add note
-Insert at start: Note: 
-Insert at end: (validated)
-
-Para 45: Fix spelling
-Replace "differents" with "different"
-```
-
-**This generates JSON with:**
-- 1 replace (novel → improved)
-- 1 delete (as previously reported)
-- 2 inserts (Note: and (validated))
-- 1 replace (differents → different)
-
-**NOT** one big replace for the entire paragraph.
-
-## Changes Markdown Template
+## Template
 
 ```markdown
 ---
 author: Tiger
 source: paper.docx
 output: paper_revised.docx
-track_revisions: true
 ---
 
 # Comments
 
 Para 24: Methodology suggestion
-The three "advances" listed here are clear but partially overlap...
+The three "advances" listed here overlap...
 > Selection range: chars 10-50
 > Initials: T
 
@@ -144,18 +68,12 @@ Insert at end: (validated)
 Para 67: Remove redundancy
 Delete: "as previously reported"
 
-Para 82: Delete with ambiguity
-Delete: "the" (chars 15-18)
-
 ---
 
 # Format Edits
 
 Para 12: Paragraph format
 Center align, line spacing 1.5, space before 12pt
-
-Para 45-48: Indentation
-Left indent 36pt
 
 ---
 
@@ -180,80 +98,34 @@ Heading1 style:
 
 # Global Changes
 
-Replace all "significant difference" with "statistically significant difference"
+Replace "significant difference" with "statistically significant difference"
 ```
 
-## Syntax Reference
+## Quick Syntax
 
-### Header (YAML frontmatter)
-| Field | Required | Description |
-|-------|----------|-------------|
-| author | Yes | Default author for all changes |
-| source | Yes | Path to source docx file |
-| output | Yes | Path for output docx file |
-| track_revisions | No | Enable tracked changes (default: true) |
+| Type | Syntax |
+|------|--------|
+| Replace | `Replace "old" with "new"` |
+| Insert start | `Insert at start: text` |
+| Insert end | `Insert at end: text` |
+| Delete | `Delete: "text"` or `Delete: "text" (chars 15-18)` |
+| Format | `Center align, Bold, Line spacing 1.5` |
+| Table | `Insert row after row N`, `Delete row N`, `Merge columns X-Y in row N` |
+| Style | `Normal style: Font size 10pt, Bold` |
+| Global | `Replace "old" with "new"` (no Para prefix) |
 
-### Comments
-```markdown
-Para {N}: {title}
-{comment text}
-> Selection range: chars {start}-{end}
-> Initials: {initials}
-```
+See [REFERENCE.md](REFERENCE.md) for full syntax reference.
 
-### Text Edits
-- **Replace**: `Replace "{old}" with "{new}"`
-- **Insert at start**: `Insert at start: {text}`
-- **Insert at end**: `Insert at end: {text}`
-- **Delete**: `Delete: "{text}"` or `Delete: "{text}" (chars {start}-{end})`
+## Workflow
 
-### Format Edits
-```markdown
-Para {N}: {title}
-{format1}, {format2}, ...
-```
-
-Supported formats:
-- Center align, Left align, Right align, Justify
-- Bold, Italic
-- Line spacing {N}, Space before {N}pt, Space after {N}pt
-- Left indent {N}pt, Right indent {N}pt
-- Font size {N}pt
-
-### Table Edits
-```markdown
-Table {N}:
-  Insert row after row {N}
-  Delete row {N}
-  Merge columns {X}-{Y} in row {N}
-  Merge {X} cells in row {N}
-```
-
-### Style Edits
-```markdown
-{StyleName} style:
-  {format1}, {format2}, ...
-```
-
-### Global Changes
-```markdown
-Replace "{old}" with "{new}"
-```
-
-## Ambiguity Detection
-
-If text appears multiple times in a paragraph, the script will show an error with all positions and ask you to add position information.
-
-## Workflows
-
-1. Read source docx (using list_paragraphs.py or directly)
+1. Read source docx (list_paragraphs.py)
 2. Generate changes.md
-3. Run `md_to_json.py changes.md changes.json`
-4. If ambiguity error, resolve with user and regenerate MD
+3. Convert to JSON (md_to_json.py)
+4. If ambiguity error, add position info and regenerate
 5. Apply to docx
 
 ## Scripts
 
-- `scripts/list_paragraphs.py` - List docx paragraph structure
-- `scripts/md_to_json.py` - Convert Markdown to docx_revision JSON
-- `scripts/docx_revision/` - Bundled docx_revision package
+- `scripts/list_paragraphs.py` - List paragraph structure
+- `scripts/md_to_json.py` - Convert Markdown to JSON
+- `scripts/docx_revision/` - Bundled package
