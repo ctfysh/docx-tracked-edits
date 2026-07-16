@@ -4,6 +4,39 @@ import json
 import re
 import sys
 from pathlib import Path
+from docx import Document
+
+
+def check_ambiguity(edit, doc):
+    """检查文本在段落中是否出现多次"""
+    if edit["type"] not in ("replace", "delete"):
+        return None
+
+    para_idx = edit["paragraph_index"]
+    if para_idx >= len(doc.paragraphs):
+        return f"段落索引 {para_idx} 超出范围"
+
+    para_text = doc.paragraphs[para_idx].text
+    old_text = edit.get("old_text") or edit.get("text")
+
+    if old_text not in para_text:
+        return f"文本 '{old_text[:30]}...' 未在段落 {para_idx} 中找到"
+
+    count = para_text.count(old_text)
+    if count > 1:
+        positions = []
+        start = 0
+        while True:
+            pos = para_text.find(old_text, start)
+            if pos == -1:
+                break
+            positions.append((pos, pos + len(old_text)))
+            start = pos + 1
+
+        pos_str = "\n".join([f"  位置{i+1}: 第{p[0]}-{p[1]}字符" for i, p in enumerate(positions)])
+        return f"⚠️ 歧义检测: \"{old_text[:30]}...\" 在段落 {para_idx} 出现{count}次\n{pos_str}\n\n请在 MD 中添加位置信息:\n  删除: \"{old_text}\" (第{positions[0][0]}-{positions[0][1]}字符)"
+
+    return None
 
 def parse_frontmatter(content):
     """解析 YAML frontmatter"""
@@ -171,7 +204,19 @@ def main():
     
     if 'Text Edits' in sections:
         config["text_modifications"] = parse_text_edits(sections['Text Edits'])
-    
+
+    if config["text_modifications"]:
+        doc = Document(config["source"])
+        errors = []
+        for edit in config["text_modifications"]:
+            error = check_ambiguity(edit, doc)
+            if error:
+                errors.append(error)
+
+        if errors:
+            print("\n".join(errors))
+            sys.exit(1)
+
     json_path.write_text(json.dumps(config, indent=2, ensure_ascii=False), encoding='utf-8')
     print(f"✅ 已生成: {json_path}")
 
