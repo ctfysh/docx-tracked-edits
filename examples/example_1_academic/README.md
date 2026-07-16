@@ -1,4 +1,4 @@
-[English](#example-1-academic-paper-editing) | [中文](#example-1-1)
+[English](#example-1-academic-paper-editing) | [中文](#示例-1学术论文编辑)
 
 # Example 1: Academic Paper Editing
 
@@ -41,7 +41,7 @@ All replacements are word-level precise modifications, no whole-sentence or whol
 
 ---
 
-[English](#example-1-academic-paper-editing) | [中文](#example-1-1)
+[English](#example-1-academic-paper-editing) | [中文](#示例-1学术论文编辑)
 
 # 示例 1：学术论文编辑
 

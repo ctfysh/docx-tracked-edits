@@ -5,20 +5,21 @@ description: 使用 AI 编辑带有修订和批注的 docx 文件。生成可转
 
 # Docx Tracked Edits
 
+## 核心功能
+
+**本 skill 只做两件事：**
+
+1. **套模板**：按标准格式解析修改指令
+2. **执行修订**：将修改应用到 Word 文档
+
 ## 快速开始
 
-1. **列出段落**: `python scripts/list_paragraphs.py paper.docx`
-2. **编写 changes.md**（见下方模板）
-3. **转换**: `python scripts/md_to_json.py changes.md changes.json`
-4. **应用**:
-```python
-import json
-from scripts.docx_revision import ComprehensiveDocxReviewer
-with open('changes.json') as f: config = json.load(f)
-reviewer = ComprehensiveDocxReviewer(config['source'])
-reviewer.apply_json_config(config)
-reviewer.save(config['output'])
-```
+1. **审查阶段**：其他 AI 读文档，找问题
+2. **模板阶段**：其他 AI 按本 skill 定义的模板格式输出问题列表
+3. **执行阶段**：本 skill 解析模板，应用修改
+4. **结果阶段**：用户获得修订文档
+
+**关键：本 skill 定义了修改指令的标准模板格式。其他 AI 工具必须按此格式输出，本 skill 才能解析执行。**
 
 ## 核心原则
 
@@ -38,67 +39,14 @@ reviewer.save(config['output'])
 | `将 "很长的内容..." 改为 ""` | `删除: "很长的内容..."` |
 | `将 "原文" 改为 "新内容 原文"` | `在开头插入: 新内容` |
 
-## 模板
+## 模板格式
 
-```markdown
+```yaml
 ---
 author: Tiger
 source: paper.docx
 output: paper_revised.docx
 ---
-
-# Comments
-
-Para 24: 方法论建议
-此处列出的三项"进展"表述清晰但部分重叠...
-> 选中范围: 第10-50字符
-> 缩写: T
-
----
-
-# Text Edits
-
-Para 8: 标题修正
-将 "novel approach" 改为 "improved method"
-
-Para 23: 补充内容
-在开头插入: Updated: 
-在末尾插入: (validated)
-
-Para 67: 删除冗余
-删除: "as previously reported"
-
----
-
-# Format Edits
-
-Para 12: 段落格式
-居中对齐, 行距1.5倍, 段前12pt
-
----
-
-# Table Edits
-
-表格0:
-  第2行下方加一行
-  删掉第5行
-  合并第二行的三个格子
-
----
-
-# Style Edits
-
-Normal 样式:
-  段前6pt, 段后6pt
-
-Heading1 样式:
-  字号16pt, 加粗
-
----
-
-# Global Changes
-
-将全文 "significant difference" 改为 "statistically significant difference"
 ```
 
 ## 快速语法
@@ -114,7 +62,17 @@ Heading1 样式:
 | 样式 | `Normal 样式: 字号10pt, 加粗` |
 | 全局 | `将 "old" 改为 "new"`（无 Para 前缀） |
 
-完整语法参考见 [REFERENCE.md](REFERENCE.md)。
+## 模板格式
+
+```yaml
+---
+author: Tiger
+source: paper.docx
+output: paper_revised.docx
+---
+```
+
+完整语法见 [../references/REFERENCE-core-zh.md](../references/REFERENCE-core-zh.md)。完整示例和错误处理见 [../references/REFERENCE-zh.md](../references/REFERENCE-zh.md)。
 
 ## 工作流程
 

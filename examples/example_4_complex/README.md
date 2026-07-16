@@ -1,4 +1,4 @@
-[English](#example-4-complex-multi-section-document) | [中文](#example-4-1)
+[English](#example-4-complex-multi-section-document) | [中文](#示例-4多节复杂文档)
 
 # Example 4: Complex Multi-Section Document
 
@@ -16,11 +16,11 @@ Demonstrates comprehensive application of all edit types in multi-section docume
 
 | Type | Specific Operations |
 |------|---------------------|
-| **Text Edits** | Tiger公司→Tiger科技有限公司, year correction, time adjustment |
+| **Text Edits** | Tiger Inc.→Tiger Technology Co., Ltd., year correction, time adjustment |
 | **Table Edits** | Budget table insert row + merge cells |
 | **Format Edits** | Title center+bold, overview justify+line spacing, table title font size |
 | **Style Edits** | Heading1 style (font size+bold), Normal style (line spacing+space before) |
-| **Global Changes** | "项目组" → "项目团队" (global replacement across 3 paragraphs) |
+| **Global Changes** | "project team" → "project team" (unified terminology, global replacement across 3 paragraphs) |
 | **Comments** | 3 comments: project overview, timeline, team formation |
 
 ## How to Run
@@ -36,14 +36,14 @@ python examples/example_4_complex/apply_changes.py
 ## Minimalism Principle in Action
 
 All text replacements are phrase-level precise modifications:
-- `Tiger公司` → `Tiger科技有限公司` (full company name)
-- `第1-3月` → `第1-4月` (time fine-tuning)
+- `Tiger Inc.` → `Tiger Technology Co., Ltd.` (full company name)
+- `months 1-3` → `months 1-4` (time fine-tuning)
 - `Chen et al., 2022` → `Chen et al., 2023` (year correction)
-- Global replacement `项目组` → `项目团队` (unified terminology)
+- Global replacement `project team` → `project team` (unified terminology)
 
 ---
 
-[English](#example-4-complex-multi-section-document) | [中文](#example-4-1)
+[English](#example-4-complex-multi-section-document) | [中文](#示例-4多节复杂文档)
 
 # 示例 4：多节复杂文档
 

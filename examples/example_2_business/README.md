@@ -1,4 +1,4 @@
-[English](#example-2-business-report) | [中文](#example-2-1)
+[English](#example-2-business-report) | [中文](#示例-2商业报告)
 
 # Example 2: Business Report
 
@@ -45,7 +45,7 @@ No whole-sentence or whole-paragraph rewrites.
 
 ---
 
-[English](#example-2-business-report) | [中文](#example-2-1)
+[English](#example-2-business-report) | [中文](#示例-2商业报告)
 
 # 示例 2：商业报告
 

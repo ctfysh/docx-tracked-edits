@@ -2,11 +2,107 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 创建一个 OpenCode skill，通过 AI 生成的 Markdown 文件编辑 docx 文档，支持修订模式和批注。
+**Goal:** 创建一个 OpenCode skill，用于将**已识别的修改需求**转化为 Word 文档的修订模式编辑。
+
+**核心定位：本 skill 是执行器，不是审查工具。**
+
+## 核心功能
+
+**本 skill 只做两件事：**
+
+1. **套模板**：按标准格式解析修改指令
+2. **执行修订**：将修改应用到 Word 文档
+
+```
+修改指令 → 解析模板 → 应用修订 → 修订文档
+```
+
+## 工作流
+
+```
+1. 审查阶段（其他工具/对话）：读论文，发现问题
+2. 模板阶段：其他 AI 按本 skill 定义的模板格式输出问题列表
+3. 执行阶段（本 skill）：解析模板，将问题转化为 tracked changes
+```
+
+### 模板协议
+
+**本 skill 定义了修改指令的标准模板格式。其他 AI 工具必须按此格式输出，本 skill 才能解析执行。**
+
+模板格式详见 REFERENCE-zh.md 和 REFERENCE-en.md。
+
+### 审查阶段（不在本 skill 范围内）
+
+用户可能通过多种方式识别需要修改的内容：
+
+- 让 AI 阅读论文并提出修改建议
+- 自己审阅后记录修改点
+- 用其他工具（如 Grammarly）检查问题
+- 同事/导师的审稿意见
+- 期刊审稿人的反馈
+
+### 执行阶段（本 skill 的职责）
+
+将识别出的修改需求转化为 Word 修订标记。
 
 **Architecture:** 单文件 skill，捆绑 docx_revision 包。包含 SKILL.md 主指令、list_paragraphs.py 段落查看器、md_to_json.py 转换脚本。
 
 **Tech Stack:** Python, python-docx, PyYAML
+
+## 双语设计
+
+### 设计原则
+
+**所有面向用户的文档都提供中英文双语版本。**
+
+### 双语架构
+
+| 文件 | 语言 | 用途 |
+|------|------|------|
+| `SKILL.md` | 路由器 | 根据用户语言自动加载对应技能文件 |
+| `SKILL-en.md` | 英文 | 英文版技能说明 |
+| `SKILL-zh.md` | 中文 | 中文版技能说明 |
+| `REFERENCE-en.md` | 英文 | 英文语法参考（模板协议） |
+| `REFERENCE-zh.md` | 中文 | 中文语法参考（模板协议） |
+| `README.md` | 双语 | 项目说明，使用锚点跳转切换语言 |
+
+### SKILL.md 语言路由
+
+SKILL.md 只是路由器，根据用户语言自动加载对应的技能文件：
+
+```markdown
+## Language Detection
+
+**Auto-detect user language and load the appropriate skill file:**
+
+- If user's request is in **English** → Load `SKILL-en.md`
+- If user's request is in **Chinese** → Load `SKILL-zh.md`
+- If ambiguous → Ask user to choose: "Please specify language: English or 中文?"
+```
+
+## 面向非技术用户的设计原则
+
+**核心理念：用户只需要把修改需求告诉 AI，所有技术操作都在后台自动完成。**
+
+### 用户体验流程
+
+```
+用户 → AI 助手 → Word 文档
+```
+
+- 用户不需要知道什么是 Markdown
+- 用户不需要知道什么是 JSON
+- 用户不需要执行任何命令
+- 用户不需要安装任何软件
+- 所有技术细节对用户完全透明
+
+### 修改指令来源
+
+用户可以通过多种方式提供修改指令：
+
+1. **自然语言描述**："把第8段的'novel'改为'improved'"
+2. **复制粘贴审稿意见**：期刊审稿人的反馈
+3. **结构化列表**：用户自己记录的修改点
 
 ## Global Constraints
 

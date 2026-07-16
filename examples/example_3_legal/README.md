@@ -1,4 +1,4 @@
-[English](#example-3-legal-document) | [中文](#example-3-1)
+[English](#example-3-legal-document-revision) | [中文](#示例-3法律文档修订)
 
 # Example 3: Legal Document Revision
 
@@ -14,7 +14,7 @@ Demonstrates a complete legal contract revision workflow: date/amount updates, c
 
 ## Demonstrated Edit Types
 
-- **replace** — Precise date (2023→2024) and amount (伍万→捌万) updates
+- **replace** — Precise date (2023→2024) and amount (50,000→80,000) updates
 - **delete** — Remove outdated force majeure clause
 - **insert** — Insert definition clause at contract beginning
 - **comment** — Add risk warning comment on dispute resolution clause
@@ -41,13 +41,13 @@ python examples/example_3_legal/apply_changes.py
 ## Minimalism Principle in Action
 
 All replacements are minimal unit precise modifications:
-- `2023年12月31日` → `2024年12月31日` (only change year)
-- `伍万元整` → `捌万元整` (only change amount number)
+- `2023/12/31` → `2024/12/31` (only change year)
+- `50,000` → `80,000` (only change amount number)
 - `¥50,000.00` → `¥80,000.00` (only change numbers)
 
 ---
 
-[English](#example-3-legal-document) | [中文](#example-3-1)
+[English](#example-3-legal-document-revision) | [中文](#示例-3法律文档修订)
 
 # 示例 3：法律文档修订
 
