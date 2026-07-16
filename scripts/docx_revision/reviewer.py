@@ -481,7 +481,14 @@ class ComprehensiveDocxReviewer:
         if style_type not in valid_style_types:
             raise ValueError(f"不支持的样式类型: {style_type}")
 
-        style = self.document.styles[style_name]
+        # 通过样式名称或样式 ID 查找样式
+        style = None
+        for s in self.document.styles:
+            if s.name == style_name or s.style_id == style_name:
+                style = s
+                break
+        if style is None:
+            raise ValueError(f"样式 '{style_name}' 不存在")
 
         style_change = OxmlElement('w:styleChange')
         style_change.set(qn('w:id'), str(revision_id))
