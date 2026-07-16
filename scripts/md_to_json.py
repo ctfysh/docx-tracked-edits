@@ -329,6 +329,62 @@ def parse_table_edits(lines):
     return edits
 
 
+def parse_style_edits(lines):
+    """解析 Style Edits section"""
+    edits = []
+    current_style = None
+    current_changes = {}
+
+    for line in lines:
+        style_match = re.match(r'^(.+?)\s*样式:', line)
+        if style_match:
+            if current_style and current_changes:
+                edits.append({
+                    "style_name": current_style,
+                    "changes": current_changes.copy(),
+                    "author": None
+                })
+            current_style = style_match.group(1)
+            current_changes = {}
+            continue
+
+        if current_style is None:
+            continue
+
+        items = [x.strip() for x in line.split(',')]
+        for item in items:
+            for keyword, (key, value) in FORMAT_KEYWORDS.items():
+                if keyword in item:
+                    current_changes[key] = value
+                    break
+            else:
+                result = parse_format_value(item)
+                if result:
+                    current_changes[result[0]] = result[1]
+
+    if current_style and current_changes:
+        edits.append({
+            "style_name": current_style,
+            "changes": current_changes,
+            "author": None
+        })
+
+    return edits
+
+
+def parse_global_changes(lines):
+    """解析 Global Changes section"""
+    replacements = []
+    for line in lines:
+        match = re.match(r'^将\s*"?([^"]+)"?\s*改为\s*"?([^"]+)"?', line)
+        if match:
+            replacements.append({
+                "old": match.group(1),
+                "new": match.group(2)
+            })
+    return replacements
+
+
 def main():
     if len(sys.argv) < 3:
         print("用法: python md_to_json.py <input.md> <output.json>")
@@ -366,6 +422,25 @@ def main():
 
     if 'Table Edits' in sections:
         config["table_modifications"] = parse_table_edits(sections['Table Edits'])
+
+    if 'Style Edits' in sections:
+        config["style_modifications"] = parse_style_edits(sections['Style Edits'])
+
+    if 'Global Changes' in sections:
+        global_replacements = parse_global_changes(sections['Global Changes'])
+        if global_replacements:
+            doc = Document(config["source"])
+            for repl in global_replacements:
+                for i, para in enumerate(doc.paragraphs):
+                    if repl["old"] in para.text:
+                        config["text_modifications"].append({
+                            "type": "replace",
+                            "paragraph_index": i,
+                            "old_text": repl["old"],
+                            "new_text": repl["new"],
+                            "author": None
+                        })
+                        break
 
     if config["text_modifications"]:
         doc = Document(config["source"])
