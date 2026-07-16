@@ -564,10 +564,23 @@ class ComprehensiveDocxReviewer:
                     color=tuple(mod.get('color', [0, 0, 255]))
                 )
             elif mod_type == 'delete':
+                start_pos = mod.get('start_pos')
+                end_pos = mod.get('end_pos')
+                
+                if start_pos is None or end_pos is None:
+                    paragraph = self.document.paragraphs[mod['paragraph_index']]
+                    text_to_delete = mod['text']
+                    pos = paragraph.text.find(text_to_delete)
+                    if pos == -1:
+                        print(f"⚠️ 未找到文本: '{text_to_delete[:30]}...' 在段落 {mod['paragraph_index']}")
+                        continue
+                    start_pos = pos
+                    end_pos = pos + len(text_to_delete)
+                
                 self.delete_text_with_tracking(
                     paragraph_index=mod['paragraph_index'],
-                    start_pos=mod['start_pos'],
-                    end_pos=mod['end_pos'],
+                    start_pos=start_pos,
+                    end_pos=end_pos,
                     author=mod.get('author', 'Reviewer'),
                     color=tuple(mod.get('color', [255, 0, 0]))
                 )

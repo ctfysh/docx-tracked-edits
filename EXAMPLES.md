@@ -223,7 +223,9 @@ Normal 样式:
 将 "项目组" 改为 "项目团队"
 ```
 
-## Example 5: Minimal Single Edit
+## Example 5: Minimal Single Edit (简单示例)
+
+> **Note:** This is a simplified example for quick reference. See Examples 1-4 in the `examples/` directory for complete end-to-end demonstrations with Python code.
 
 ```markdown
 ---
@@ -238,7 +240,9 @@ Para 0: 修正称呼
 将 "Dear Sir" 改为 "Dear Colleague"
 ```
 
-## Example 6: Formatting-Only Document
+## Example 6: Formatting-Only Document (格式修改示例)
+
+> **Note:** This is a simplified example for quick reference. See Examples 1-4 in the `examples/` directory for complete end-to-end demonstrations with Python code.
 
 ```markdown
 ---
@@ -273,7 +277,9 @@ Normal 样式:
   字体SimSun, 字号10.5pt, 行距1.5倍
 ```
 
-## Example 7: Table-Heavy Document
+## Example 7: Table-Heavy Document (表格编辑示例)
+
+> **Note:** This is a simplified example for quick reference. See Examples 1-4 in the `examples/` directory for complete end-to-end demonstrations with Python code.
 
 ```markdown
 ---
@@ -450,8 +456,58 @@ Para 8: 修正重复
 
 ## Quick Start
 
+### Running Complete Examples (推荐)
+
+The `examples/` directory contains complete end-to-end demonstrations:
+
+```bash
+# Run all examples
+bash examples/run_all_examples.sh
+
+# Or run individual examples
+cd examples/example_1_academic
+python create_original.py      # Generate original docx
+python apply_changes.py        # Apply changes
+```
+
+Each example includes:
+- `create_original.py` - Generate original docx
+- `changes.md` - Changes specification
+- `apply_changes.py` - Apply changes pipeline
+- `README.md` - Description
+
+### Quick Reference (快速参考)
+
+For quick syntax reference, see the simplified examples above (Examples 5-10).
+
 1. Read source docx to understand structure
 2. Copy the most relevant example above
 3. Modify content to match your edits
 4. Run `python scripts/md_to_json.py changes.md changes.json`
 5. Apply changes to docx with the processing pipeline
+
+### Full Workflow
+
+```bash
+# 1. List paragraphs in source docx
+python scripts/list_paragraphs.py paper.docx
+
+# 2. Create changes.md based on the template
+
+# 3. Convert to JSON
+python scripts/md_to_json.py changes.md changes.json
+
+# 4. Apply to docx
+python -c "
+import json
+from scripts.docx_revision import ComprehensiveDocxReviewer
+
+with open('changes.json') as f:
+    config = json.load(f)
+
+reviewer = ComprehensiveDocxReviewer(config['source'])
+reviewer.apply_json_config(config)
+reviewer.save(config['output'])
+print(f'✅ Generated: {config[\"output\"]}')
+"
+```
