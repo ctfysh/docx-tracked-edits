@@ -80,6 +80,66 @@ def parse_comments(lines):
     return comments
 
 
+def parse_text_edits(lines):
+    """解析 Text Edits section"""
+    edits = []
+    current_para = None
+    current_title = None
+    
+    for line in lines:
+        # 匹配 "Para N: title"
+        para_match = re.match(r'^Para\s+(\d+):\s*(.+)', line)
+        if para_match:
+            current_para = int(para_match.group(1))
+            current_title = para_match.group(2)
+            continue
+        
+        if current_para is None:
+            continue
+        
+        # 替换: 将 "old" 改为 "new"
+        replace_match = re.match(r'^将\s*"(.+?)"\s*改为\s*"(.+?)"', line)
+        if replace_match:
+            edits.append({
+                "type": "replace",
+                "paragraph_index": current_para,
+                "old_text": replace_match.group(1),
+                "new_text": replace_match.group(2),
+                "author": None
+            })
+            continue
+        
+        # 插入: 在开头/末尾插入: text
+        insert_match = re.match(r'^在(开头|末尾)插入:\s*(.+)', line)
+        if insert_match:
+            position = 0 if insert_match.group(1) == '开头' else None
+            edits.append({
+                "type": "insert",
+                "paragraph_index": current_para,
+                "text": insert_match.group(2),
+                "position": position,
+                "author": None
+            })
+            continue
+        
+        # 删除: 删除: "text" 或 删除: "text" (第N-M字符)
+        delete_match = re.match(r'^删除:\s*"(.+?)"(?:\s*\(第(\d+)-(\d+)字符\))?', line)
+        if delete_match:
+            edit = {
+                "type": "delete",
+                "paragraph_index": current_para,
+                "text": delete_match.group(1),
+                "author": None
+            }
+            if delete_match.group(2):
+                edit["start_pos"] = int(delete_match.group(2))
+                edit["end_pos"] = int(delete_match.group(3))
+            edits.append(edit)
+            continue
+    
+    return edits
+
+
 def main():
     if len(sys.argv) < 3:
         print("用法: python md_to_json.py <input.md> <output.json>")
@@ -108,6 +168,9 @@ def main():
     
     if 'Comments' in sections:
         config["comments"] = parse_comments(sections['Comments'])
+    
+    if 'Text Edits' in sections:
+        config["text_modifications"] = parse_text_edits(sections['Text Edits'])
     
     json_path.write_text(json.dumps(config, indent=2, ensure_ascii=False), encoding='utf-8')
     print(f"✅ 已生成: {json_path}")
