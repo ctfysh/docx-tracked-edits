@@ -1,73 +1,36 @@
 ---
 name: docx-tracked-edits
-description: Edit docx files with tracked changes and comments using AI. Generates Markdown change specs that convert to docx_revision JSON format. Use when user wants to revise Word documents with tracked edits, add comments, or modify content with revision marks.
+description: "Edit docx files with tracked changes and comments using AI. Generates Markdown change specs that convert to docx_revision JSON format. Bilingual skill — prompts user to choose Chinese or English. Use when user wants to revise Word documents with tracked edits, add comments, or modify content with revision marks. Triggers: 'docx tracked edits', 'Word tracked changes', 'revision marks', 'docx 修订', 'Word 修订模式', '修订标记'."
 ---
 
-# Docx Tracked Edits
+# Docx Tracked Edits — Bilingual Skill / 双语技能
 
-## Core Function
+> AI-driven docx editing with tracked changes. Tell AI what to change in natural language, and get a Word document with revision marks automatically.
+>
+> **Core function: This skill does two things:**
+> 1. **Parse template**: Read modification instructions in standard format
+> 2. **Execute revision**: Apply changes to Word document
 
-**This skill does two things:**
+## Language Selection / 语言选择
 
-1. **Parse template**: Read modification instructions in standard format
-2. **Execute revision**: Apply changes to Word document
+**IMPORTANT — You MUST use the `question` tool to present the language choice as clickable options (tabs/buttons). Do NOT ask the user to type their answer.**
 
+Use the `question` tool like this:
 ```
-Modification instructions → Parse template → Apply revision → Revised document
-```
-
-## Language Detection
-
-**Auto-detect user language and load the appropriate skill file:**
-
-- If user's request is in **English** → Load `SKILL-en.md`
-- If user's request is in **Chinese** → Load `SKILL-zh.md`
-- If ambiguous → Ask user to choose: "Please specify language: English or 中文?"
-
-## Quick Start
-
-1. **Review phase**: Other AI reads the document, identifies issues
-2. **Template phase**: Other AI outputs issue list in this skill's template format
-3. **Execution phase**: This skill parses the template, applies changes
-4. **Result phase**: User receives the revised document
-
-**Key: This skill defines the standard template format for modification instructions. Other AI tools must output in this format for this skill to parse and execute.**
-
-## Template Format
-
-```yaml
----
-author: Tiger
-source: paper.docx
-output: paper_revised.docx
----
+question(questions=[{
+  "header": "Language / 语言",
+  "question": "请问您希望用中文还是英文交流？/ Would you like to communicate in Chinese or English?",
+  "options": [
+    {"label": "中文", "description": "使用中文进行对话"},
+    {"label": "English", "description": "Converse in English"}
+  ]
+}])
 ```
 
-## Quick Syntax
+After the user selects a language, read the corresponding file:
 
-| Type | Syntax |
-|------|--------|
-| Replace | `Replace "old" with "new"` |
-| Insert start | `Insert at start: text` |
-| Insert end | `Insert at end: text` |
-| Delete | `Delete: "text"` or `Delete: "text" (chars 15-18)` |
-| Format | `Center align, Bold, Line spacing 1.5` |
-| Table | `Insert row after row N`, `Delete row N`, `Merge columns X-Y in row N` |
-| Style | `Normal style: Font size 10pt, Bold` |
-| Global | `Replace "old" with "new"` (no Para prefix) |
+- **中文** → Read `SKILL-zh.md` in the same directory. Converse in Chinese, using English for key terms as noted.
+- **English** → Read `SKILL-en.md` in the same directory. Converse entirely in English.
+- **No selection** → Default to `SKILL-zh.md` (中文).
 
-See [../references/REFERENCE-core-en.md](../references/REFERENCE-core-en.md) for full syntax. See [../references/REFERENCE-en.md](../references/REFERENCE-en.md) for examples and error handling.
-
-## Workflow
-
-1. Read source docx (list_paragraphs.py)
-2. Generate changes.md
-3. Convert to JSON (md_to_json.py)
-4. If ambiguity error, add position info and regenerate
-5. Apply to docx
-
-## Scripts
-
-- `scripts/list_paragraphs.py` - List paragraph structure
-- `scripts/md_to_json.py` - Convert Markdown to JSON
-- `scripts/docx_revision/` - Bundled package
+Do NOT read both files. Load only the one matching the user's language choice.
