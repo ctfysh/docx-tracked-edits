@@ -74,7 +74,16 @@ output: paper_revised.docx
 
 See [../references/REFERENCE-core-en.md](../references/REFERENCE-core-en.md) for full syntax. See [../references/REFERENCE-en.md](../references/REFERENCE-en.md) for examples and error handling.
 
-## Workflow
+## What NOT to Do
+
+| ❌ Don't | ✅ Do Instead |
+|---------|--------------|
+| Replace entire sentences | Replace only the specific words/phrases |
+| Use `Replace "long text..." with ""` | Use `Delete: "long text..."` |
+| Modify document without generating changes.md | Always generate changes.md first, then apply |
+| Skip ambiguity check when text appears multiple times | Add `(chars N-M)` position when ambiguity detected |
+| Apply changes without user confirmation | Show changes.md to user, wait for confirmation |
+| Use `Para N:` for global replacements | Omit `Para N:` prefix for global changes |
 
 1. Read source docx (list_paragraphs.py)
 2. Generate changes.md

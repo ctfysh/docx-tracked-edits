@@ -74,6 +74,17 @@ output: paper_revised.docx
 
 完整语法见 [../references/REFERENCE-core-zh.md](../references/REFERENCE-core-zh.md)。完整示例和错误处理见 [../references/REFERENCE-zh.md](../references/REFERENCE-zh.md)。
 
+## 不要做什么
+
+| ❌ 不要 | ✅ 应该 |
+|---------|--------|
+| 替换整个句子 | 只替换特定的词/词组 |
+| 使用 `将 "很长的文本..." 改为 ""` | 使用 `删除: "很长的文本..."` |
+| 不生成 changes.md 直接修改文档 | 先生成 changes.md，再应用 |
+| 文本多次出现时跳过歧义检查 | 添加 `(第N-M字符)` 位置信息 |
+| 不经用户确认直接应用修改 | 展示 changes.md 给用户，等待确认 |
+| 全局替换使用 `Para N:` 前缀 | 全局替换省略 `Para N:` 前缀 |
+
 ## 工作流程
 
 1. 读取源 docx（list_paragraphs.py）
