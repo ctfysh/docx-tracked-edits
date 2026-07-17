@@ -74,7 +74,16 @@ output: paper_revised.docx
 
 See [../references/REFERENCE-core-en.md](../references/REFERENCE-core-en.md) for full syntax. See [../references/REFERENCE-en.md](../references/REFERENCE-en.md) for examples and error handling.
 
-## What NOT to Do
+## Failure Modes & Recovery
+
+| Symptom | Trigger | Recovery |
+|---------|---------|----------|
+| Ambiguity error | Text appears multiple times in paragraph | Add `(chars N-M)` position to specify exact match |
+| Paragraph not found | Invalid paragraph number | Run `list_paragraphs.py` to get valid paragraph indices |
+| Text not found | Target text doesn't exist in paragraph | Check spelling, run `list_paragraphs.py` to verify content |
+| Format parse error | Invalid format keyword | Use only: `Center align`, `Bold`, `Justify align`, `Line spacing N`, `Font size Npt` |
+| Table index out of range | Table number exceeds document tables | Check document structure, verify table exists |
+| JSON parse error | Invalid changes.md format | Ensure YAML frontmatter with `author`, `source`, `output` fields |
 
 | ❌ Don't | ✅ Do Instead |
 |---------|--------------|

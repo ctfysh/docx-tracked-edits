@@ -74,6 +74,17 @@ output: paper_revised.docx
 
 完整语法见 [../references/REFERENCE-core-zh.md](../references/REFERENCE-core-zh.md)。完整示例和错误处理见 [../references/REFERENCE-zh.md](../references/REFERENCE-zh.md)。
 
+## 失败模式与恢复
+
+| 症状 | 触发条件 | 恢复方法 |
+|------|---------|---------|
+| 歧义检测错误 | 文本在段落中出现多次 | 添加 `(第N-M字符)` 位置信息指定精确匹配 |
+| 段落未找到 | 段落索引无效 | 运行 `list_paragraphs.py` 获取有效段落索引 |
+| 文本未找到 | 目标文本不存在于段落中 | 检查拼写，运行 `list_paragraphs.py` 验证内容 |
+| 格式解析错误 | 格式关键字无效 | 只能使用：`居中对齐`、`加粗`、`两端对齐`、`行距N倍`、`字号Npt` |
+| 表格索引越界 | 表格编号超过文档表格数 | 检查文档结构，确认表格存在 |
+| JSON 解析错误 | changes.md 格式无效 | 确保 YAML frontmatter 包含 `author`、`source`、`output` 字段 |
+
 ## 不要做什么
 
 | ❌ 不要 | ✅ 应该 |
