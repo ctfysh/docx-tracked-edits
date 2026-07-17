@@ -94,11 +94,51 @@ See [../references/REFERENCE-core-en.md](../references/REFERENCE-core-en.md) for
 | Apply changes without user confirmation | Show changes.md to user, wait for confirmation |
 | Use `Para N:` for global replacements | Omit `Para N:` prefix for global changes |
 
-1. Read source docx (list_paragraphs.py)
-2. Generate changes.md
-3. Convert to JSON (md_to_json.py)
-4. If ambiguity error, add position info and regenerate
-5. Apply to docx
+## Workflow
+
+### Step 1: Read Source Document
+```bash
+python scripts/list_paragraphs.py source.docx
+```
+- **Input**: source.docx
+- **Output**: Paragraph list with indices and preview text
+- **Purpose**: Understand document structure, identify paragraph numbers for edits
+
+### Step 2: Generate changes.md
+Create modification instructions in template format:
+```yaml
+---
+author: Your Name
+source: source.docx
+output: revised.docx
+---
+
+# Text Edits
+Para N: Description
+Replace "old" with "new"
+
+# Format Edits
+Para N: Description
+Center align, Bold
+```
+- **Input**: User requirements + paragraph structure from Step 1
+- **Output**: changes.md file
+
+### Step 3: Convert to JSON
+```bash
+python scripts/md_to_json.py changes.md changes.json
+```
+- **Input**: changes.md
+- **Output**: changes.json (or error with position suggestions)
+- **Error handling**: If ambiguity error, add position info and regenerate
+
+### Step 4: Apply Revisions
+```bash
+python scripts/docx_revision/reviewer.py changes.json
+```
+- **Input**: changes.json + source.docx
+- **Output**: revised.docx with tracked changes
+- **Verification**: Open in Word to review tracked changes
 
 ## Scripts
 

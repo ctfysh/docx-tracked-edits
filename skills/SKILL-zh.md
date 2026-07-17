@@ -98,11 +98,49 @@ output: paper_revised.docx
 
 ## 工作流程
 
-1. 读取源 docx（list_paragraphs.py）
-2. 生成 changes.md
-3. 转换为 JSON（md_to_json.py）
-4. 如有歧义错误，添加位置信息并重新生成
-5. 应用到 docx
+### 步骤 1：读取源文档
+```bash
+python scripts/list_paragraphs.py source.docx
+```
+- **输入**：source.docx
+- **输出**：带索引和预览文本的段落列表
+- **目的**：理解文档结构，确定编辑的段落编号
+
+### 步骤 2：生成 changes.md
+按模板格式创建修改指令：
+```yaml
+---
+author: 您的姓名
+source: source.docx
+output: revised.docx
+---
+
+# Text Edits
+Para N: 描述
+将 "old" 改为 "new"
+
+# Format Edits
+Para N: 描述
+居中对齐, 加粗
+```
+- **输入**：用户需求 + 步骤 1 的段落结构
+- **输出**：changes.md 文件
+
+### 步骤 3：转换为 JSON
+```bash
+python scripts/md_to_json.py changes.md changes.json
+```
+- **输入**：changes.md
+- **输出**：changes.json（或带位置建议的错误）
+- **错误处理**：如有歧义错误，添加位置信息并重新生成
+
+### 步骤 4：应用修订
+```bash
+python scripts/docx_revision/reviewer.py changes.json
+```
+- **输入**：changes.json + source.docx
+- **输出**：带修订标记的 revised.docx
+- **验证**：在 Word 中打开查看修订
 
 ## 脚本
 
