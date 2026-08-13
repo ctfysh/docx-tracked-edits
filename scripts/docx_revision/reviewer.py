@@ -97,7 +97,8 @@ class ComprehensiveDocxReviewer:
                                   text: str,
                                   position: Optional[int] = None,
                                   author: str = "Reviewer",
-                                  color: Tuple[int, int, int] = (0, 0, 255)) -> int:
+                                  color: Tuple[int, int, int] = (0, 0, 255),
+                                  anchor_element: Optional[Any] = None) -> int:
         if paragraph_index >= len(self.document.paragraphs):
             raise ValueError(f"段落索引 {paragraph_index} 超出范围")
 
@@ -128,7 +129,10 @@ class ComprehensiveDocxReviewer:
 
         ins_element.append(r)
 
-        if position is not None and position > 0:
+        if anchor_element is not None:
+            # 将插入锚定在指定元素之后（用于替换：紧跟删除标记，保持原位）
+            anchor_element.addnext(ins_element)
+        elif position is not None and position > 0:
             full_text = paragraph.text
             if position <= len(full_text):
                 paragraph._p.clear()
@@ -153,6 +157,17 @@ class ComprehensiveDocxReviewer:
                     paragraph._p.append(after_run)
             else:
                 paragraph._p.append(ins_element)
+        elif position == 0:
+            # 插入到段落开头（置于 pPr 之后，保持 OOXML 元素顺序合法）
+            p = paragraph._p
+            if len(p) == 0:
+                p.append(ins_element)
+            else:
+                pPr = p.find(qn('w:pPr'))
+                if pPr is not None:
+                    pPr.addnext(ins_element)
+                else:
+                    p.insert(0, ins_element)
         else:
             paragraph._p.append(ins_element)
 
@@ -242,8 +257,15 @@ class ComprehensiveDocxReviewer:
             paragraph_index, start_pos, end_pos, author, delete_color
         )
 
+        del_element = None
+        for child in paragraph._p:
+            if child.tag == qn('w:del') and child.get(qn('w:id')) == str(del_id):
+                del_element = child
+                break
+
         ins_id = self.insert_text_with_tracking(
-            paragraph_index, new_text, None, author, insert_color
+            paragraph_index, new_text, None, author, insert_color,
+            anchor_element=del_element
         )
 
         print(f"✅ 已替换文本: '{old_text[:20]}...' → '{new_text[:20]}...'")
