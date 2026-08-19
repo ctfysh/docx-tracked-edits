@@ -61,6 +61,8 @@ output: paper_revised.docx
 | Table | `Insert row after row N`, `Delete row N`, `Merge columns X-Y in row N` |
 | Style | `Normal style: Font size 10pt, Bold` |
 | Global | `Replace "old" with "new"` (no Para prefix) |
+| Superscript | `Replace "old" with "x^2^"` (use ^x^ in new text for superscript) |
+| Subscript | `Replace "H2O" with "H~2~O~4~"` (use ~x~ in new text for subscript) |
 
 ## Template Format
 

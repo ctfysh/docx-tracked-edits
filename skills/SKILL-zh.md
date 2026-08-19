@@ -61,6 +61,8 @@ output: paper_revised.docx
 | 表格 | `第N行下方加一行`, `删掉第N行`, `合并第N行的第X-Y列` |
 | 样式 | `Normal 样式: 字号10pt, 加粗` |
 | 全局 | `将 "old" 改为 "new"`（无 Para 前缀） |
+| 上标 | `将 "x^2^" 改为 "y"` (new text 中用 ^x^ 标记上标) |
+| 下标 | `将 "H~2~O" 改为 "H~2~SO~4~"` (new text 中用 ~x~ 标记下标) |
 
 ## 模板格式
 

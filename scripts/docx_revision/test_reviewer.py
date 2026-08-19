@@ -304,6 +304,186 @@ class TestComprehensiveDocxReviewer:
         print(f"✅ 保存文档测试通过: {output_path}")
         return True
 
+    def test_parse_formatted_text(self):
+        print("\n🔧 测试 parse_formatted_text...")
+        from .reviewer import parse_formatted_text
+
+        # Plain text
+        assert parse_formatted_text("plain") == [("plain", None)]
+
+        # Superscript
+        assert parse_formatted_text("x^2^") == [("x", None), ("2", "superscript")]
+
+        # Subscript
+        assert parse_formatted_text("H~2~O") == [("H", None), ("2", "subscript"), ("O", None)]
+
+        # Mixed
+        result = parse_formatted_text("x^2^ + y~1~")
+        assert result == [("x", None), ("2", "superscript"), (" + y", None), ("1", "subscript")]
+
+        # Escaped
+        assert parse_formatted_text("a^^b") == [("a^b", None)]
+        assert parse_formatted_text("a~~b") == [("a~b", None)]
+
+        # Empty
+        assert parse_formatted_text("") == []
+
+        # Only markers
+        result = parse_formatted_text("^x^")
+        assert ("x", "superscript") in result
+
+        print("✅ parse_formatted_text 测试通过")
+        return True
+
+    def test_strip_formatting_markers(self):
+        print("\n🔧 测试 strip_formatting_markers...")
+        from .reviewer import strip_formatting_markers
+
+        assert strip_formatting_markers("x^2^") == "x2"
+        assert strip_formatting_markers("H~2~O") == "H2O"
+        assert strip_formatting_markers("a^^b") == "a^b"
+        assert strip_formatting_markers("a~~b") == "a~b"
+        assert strip_formatting_markers("plain") == "plain"
+        assert strip_formatting_markers("") == ""
+
+        print("✅ strip_formatting_markers 测试通过")
+        return True
+
+    def test_insert_text_with_superscript(self):
+        print("\n🔧 测试插入带上标的文本...")
+        self.reviewer.enable_track_revisions()
+
+        revision_id = self.reviewer.insert_text_with_tracking(
+            paragraph_index=1,
+            text="x^2^",
+            position=0,
+            author="测试员"
+        )
+        assert revision_id >= 0
+
+        paragraph = self.reviewer.document.paragraphs[1]
+        xml = paragraph._p.xml
+        assert "<w:ins" in xml
+        assert "<w:vertAlign" in xml
+        assert 'w:val="superscript"' in xml
+
+        print(f"✅ 插入上标测试通过 (修订ID: {revision_id})")
+        return True
+
+    def test_insert_text_with_subscript(self):
+        print("\n🔧 测试插入带下标的文本...")
+        self.reviewer.enable_track_revisions()
+
+        revision_id = self.reviewer.insert_text_with_tracking(
+            paragraph_index=1,
+            text="H~2~O",
+            position=0,
+            author="测试员"
+        )
+        assert revision_id >= 0
+
+        paragraph = self.reviewer.document.paragraphs[1]
+        xml = paragraph._p.xml
+        assert "<w:ins" in xml
+        assert "<w:vertAlign" in xml
+        assert 'w:val="subscript"' in xml
+
+        print(f"✅ 插入下标测试通过 (修订ID: {revision_id})")
+        return True
+
+    def test_insert_text_with_uniform_vert_align(self):
+        print("\n🔧 测试 uniform vert_align 参数...")
+        self.reviewer.enable_track_revisions()
+
+        revision_id = self.reviewer.insert_text_with_tracking(
+            paragraph_index=1,
+            text="entire text",
+            position=0,
+            author="测试员",
+            vert_align="superscript"
+        )
+        assert revision_id >= 0
+
+        paragraph = self.reviewer.document.paragraphs[1]
+        xml = paragraph._p.xml
+        assert 'w:val="superscript"' in xml
+
+        print(f"✅ uniform vert_align 测试通过 (修订ID: {revision_id})")
+        return True
+
+    def test_replace_text_with_formatted_new_text(self):
+        print("\n🔧 测试替换文本（新文本带格式标记）...")
+        self.reviewer.enable_track_revisions()
+
+        del_id, ins_id = self.reviewer.replace_text_with_tracking(
+            paragraph_index=4,
+            old_text="移动",
+            new_text="操^作^",
+            author="测试员"
+        )
+        assert del_id >= 0
+        assert ins_id >= 0
+
+        paragraph = self.reviewer.document.paragraphs[4]
+        xml = paragraph._p.xml
+        assert "<w:del" in xml
+        assert "<w:ins" in xml
+        assert "<w:vertAlign" in xml
+        assert 'w:val="superscript"' in xml
+
+        print(f"✅ 替换带格式新文本测试通过 (删除ID: {del_id}, 插入ID: {ins_id})")
+        return True
+
+    def test_replace_text_with_markers_in_old_text(self):
+        print("\n🔧 测试替换文本（旧文本带格式标记）...")
+        self.reviewer.enable_track_revisions()
+
+        del_id, ins_id = self.reviewer.replace_text_with_tracking(
+            paragraph_index=5,
+            old_text="操作^的^目标",
+            new_text="最终位置",
+            author="测试员"
+        )
+        assert del_id >= 0
+        assert ins_id >= 0
+
+        paragraph = self.reviewer.document.paragraphs[5]
+        xml = paragraph._p.xml
+        assert "<w:del" in xml
+        assert "<w:ins" in xml
+
+        print(f"✅ 旧文本带标记替换测试通过 (删除ID: {del_id}, 插入ID: {ins_id})")
+        return True
+
+    def test_delete_preserves_formatting(self):
+        print("\n🔧 测试删除保留原始格式...")
+        # 创建带格式的文档
+        doc = Document()
+        para = doc.add_paragraph()
+        run = para.add_run("bold text")
+        run.font.bold = True
+        run2 = para.add_run(" normal")
+        doc.add_paragraph("second para")
+        doc.save(self.sample_docx)
+
+        reviewer = ComprehensiveDocxReviewer(self.sample_docx)
+        reviewer.enable_track_revisions()
+        reviewer.delete_text_with_tracking(
+            paragraph_index=0,
+            start_pos=0,
+            end_pos=9,
+            author="测试员"
+        )
+
+        paragraph = reviewer.document.paragraphs[0]
+        xml = paragraph._p.xml
+        assert "<w:del" in xml
+        # 删除标记应保留原始 run 的 bold 格式
+        assert "<w:b" in xml
+
+        print("✅ 删除保留格式测试通过")
+        return True
+
     def run_all_tests(self):
         print("🚀 开始运行全面测试...")
 
@@ -319,7 +499,15 @@ class TestComprehensiveDocxReviewer:
             self.test_comment_operations,
             self.test_modify_style_with_tracking,
             self.test_apply_json_config,
-            self.test_save_document
+            self.test_save_document,
+            self.test_parse_formatted_text,
+            self.test_strip_formatting_markers,
+            self.test_insert_text_with_superscript,
+            self.test_insert_text_with_subscript,
+            self.test_insert_text_with_uniform_vert_align,
+            self.test_replace_text_with_formatted_new_text,
+            self.test_replace_text_with_markers_in_old_text,
+            self.test_delete_preserves_formatting,
         ]
 
         passed = 0

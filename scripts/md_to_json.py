@@ -7,6 +7,21 @@ import sys
 from pathlib import Path
 
 
+def strip_formatting_markers(text):
+    """移除 ^x^ 和 ~x~ 标记，只保留文本内容"""
+    if not text:
+        return ""
+    CARET_PLACEHOLDER = '\x00'
+    TILDE_PLACEHOLDER = '\x01'
+    result = text.replace('^^', CARET_PLACEHOLDER)
+    result = result.replace('~~', TILDE_PLACEHOLDER)
+    result = re.sub(r'\^([^^]+)\^', r'\1', result)
+    result = re.sub(r'~([^~]+)~', r'\1', result)
+    result = result.replace(CARET_PLACEHOLDER, '^')
+    result = result.replace(TILDE_PLACEHOLDER, '~')
+    return result
+
+
 def check_ambiguity(edit, doc):
     """检查文本在段落中是否出现多次"""
     if edit["type"] not in ("replace", "delete"):
@@ -18,6 +33,7 @@ def check_ambiguity(edit, doc):
 
     para_text = doc.paragraphs[para_idx].text
     old_text = edit.get("old_text") or edit.get("text")
+    old_text = strip_formatting_markers(old_text)
 
     # 如果已提供位置信息，验证位置有效性而不是检查歧义
     start_pos = edit.get('start_pos')

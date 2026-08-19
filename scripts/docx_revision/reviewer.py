@@ -9,7 +9,92 @@ from docx import Document
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docx.opc.constants import RELATIONSHIP_TYPE as RT
-import copy
+import re as _re
+
+
+def parse_formatted_text(text):
+    """Parse text with ^x^ (superscript) and ~x~ (subscript) markers.
+
+    Returns List[Tuple[str, Optional[str]]] where each tuple is (text, vert_align).
+    vert_align is "superscript", "subscript", or None.
+
+    Rules:
+    - ^text^ → superscript
+    - ~text~ → subscript
+    - ^^ → literal caret
+    - ~~ → literal tilde
+    - Nested/overlapping markers are NOT supported (leftmost match wins)
+
+    Examples:
+        "plain" → [("plain", None)]
+        "x^2^" → [("x", None), ("2", "superscript")]
+        "H~2~O" → [("H", None), ("2", "subscript"), ("O", None)]
+        "a^^b" → [("a^b", None)]
+        "a~~b" → [("a~b", None)]
+    """
+    if not text:
+        return []
+
+    CARET_PLACEHOLDER = '\x00CARET\x00'
+    TILDE_PLACEHOLDER = '\x00TILDE\x00'
+
+    processed = text
+    processed = processed.replace('^^', CARET_PLACEHOLDER)
+    processed = processed.replace('~~', TILDE_PLACEHOLDER)
+
+    markers = []
+    for m in _re.finditer(r'\^([^^]+)\^', processed):
+        markers.append((m.start(), m.end(), m.group(1), 'superscript'))
+    for m in _re.finditer(r'~([^~]+)~', processed):
+        markers.append((m.start(), m.end(), m.group(1), 'subscript'))
+
+    markers.sort(key=lambda x: x[0])
+
+    segments = []
+    pos = 0
+    for start, end, inner, align in markers:
+        if start < pos:
+            continue
+        if start > pos:
+            segments.append((processed[pos:start], None))
+        segments.append((inner, align))
+        pos = end
+
+    if pos < len(processed):
+        segments.append((processed[pos:], None))
+    result = []
+    for text_seg, align in segments:
+        restored = text_seg.replace(CARET_PLACEHOLDER, '^').replace(TILDE_PLACEHOLDER, '~')
+        if restored or align is not None:
+            result.append((restored, align))
+
+    return result
+
+
+def strip_formatting_markers(text):
+    """Remove ^x^ and ~x~ markers, keeping only the text content.
+
+    Examples:
+        "x^2^" → "x2"
+        "H~2~O" → "H2O"
+        "a^^b" → "a^b"
+    """
+    if not text:
+        return ""
+
+    CARET_PLACEHOLDER = '\x00'
+    TILDE_PLACEHOLDER = '\x01'
+
+    result = text.replace('^^', CARET_PLACEHOLDER)
+    result = result.replace('~~', TILDE_PLACEHOLDER)
+
+    result = _re.sub(r'\^([^^]+)\^', r'\1', result)
+    result = _re.sub(r'~([^~]+)~', r'\1', result)
+
+    result = result.replace(CARET_PLACEHOLDER, '^')
+    result = result.replace(TILDE_PLACEHOLDER, '~')
+
+    return result
 
 
 class ComprehensiveDocxReviewer:
@@ -98,7 +183,8 @@ class ComprehensiveDocxReviewer:
                                   position: Optional[int] = None,
                                   author: str = "Reviewer",
                                   color: Tuple[int, int, int] = (0, 0, 255),
-                                  anchor_element: Optional[Any] = None) -> int:
+                                  anchor_element: Optional[Any] = None,
+                                  vert_align: Optional[str] = None) -> int:
         if paragraph_index >= len(self.document.paragraphs):
             raise ValueError(f"段落索引 {paragraph_index} 超出范围")
 
@@ -110,24 +196,32 @@ class ComprehensiveDocxReviewer:
         ins_element.set(qn('w:author'), author)
         ins_element.set(qn('w:date'), self._get_current_time())
 
-        r = OxmlElement('w:r')
-        rPr = OxmlElement('w:rPr')
+        segments = parse_formatted_text(text)
+        for seg_text, seg_align in segments:
+            r = OxmlElement('w:r')
+            rPr = OxmlElement('w:rPr')
 
-        color_elem = OxmlElement('w:color')
-        color_elem.set(qn('w:val'), f'{color[0]:02X}{color[1]:02X}{color[2]:02X}')
-        rPr.append(color_elem)
+            color_elem = OxmlElement('w:color')
+            color_elem.set(qn('w:val'), f'{color[0]:02X}{color[1]:02X}{color[2]:02X}')
+            rPr.append(color_elem)
 
-        underline = OxmlElement('w:u')
-        underline.set(qn('w:val'), 'single')
-        rPr.append(underline)
+            underline = OxmlElement('w:u')
+            underline.set(qn('w:val'), 'single')
+            rPr.append(underline)
 
-        r.append(rPr)
+            effective_align = seg_align if seg_align else vert_align
+            if effective_align:
+                va = OxmlElement('w:vertAlign')
+                va.set(qn('w:val'), effective_align)
+                rPr.append(va)
 
-        t = OxmlElement('w:t')
-        t.text = text
-        r.append(t)
+            r.append(rPr)
 
-        ins_element.append(r)
+            t = OxmlElement('w:t')
+            t.text = seg_text
+            r.append(t)
+
+            ins_element.append(r)
 
         if anchor_element is not None:
             # 将插入锚定在指定元素之后（用于替换：紧跟删除标记，保持原位）
@@ -200,6 +294,18 @@ class ComprehensiveDocxReviewer:
         before_text = full_text[:start_pos]
         after_text = full_text[end_pos:]
 
+        original_rPr = None
+        char_count = 0
+        for run in paragraph.runs:
+            run_text = run.text or ""
+            run_end = char_count + len(run_text)
+            if run_end > start_pos and char_count < end_pos:
+                rpr = run._r.find(qn('w:rPr'))
+                if rpr is not None:
+                    original_rPr = copy.deepcopy(rpr)
+                break
+            char_count = run_end
+
         for run in paragraph.runs:
             run._r.getparent().remove(run._r)
 
@@ -207,15 +313,26 @@ class ComprehensiveDocxReviewer:
             paragraph.add_run(before_text)
 
         del_run = OxmlElement('w:r')
-        del_rPr = OxmlElement('w:rPr')
-
-        strike = OxmlElement('w:strike')
-        strike.set(qn('w:val'), '1')
-        del_rPr.append(strike)
-
-        color_elem = OxmlElement('w:color')
-        color_elem.set(qn('w:val'), f'{color[0]:02X}{color[1]:02X}{color[2]:02X}')
-        del_rPr.append(color_elem)
+        if original_rPr is not None:
+            del_rPr = original_rPr
+            strike = del_rPr.find(qn('w:strike'))
+            if strike is None:
+                strike = OxmlElement('w:strike')
+                strike.set(qn('w:val'), '1')
+                del_rPr.append(strike)
+            color_elem = del_rPr.find(qn('w:color'))
+            if color_elem is None:
+                color_elem = OxmlElement('w:color')
+                del_rPr.append(color_elem)
+            color_elem.set(qn('w:val'), f'{color[0]:02X}{color[1]:02X}{color[2]:02X}')
+        else:
+            del_rPr = OxmlElement('w:rPr')
+            strike = OxmlElement('w:strike')
+            strike.set(qn('w:val'), '1')
+            del_rPr.append(strike)
+            color_elem = OxmlElement('w:color')
+            color_elem.set(qn('w:val'), f'{color[0]:02X}{color[1]:02X}{color[2]:02X}')
+            del_rPr.append(color_elem)
 
         del_run.append(del_rPr)
 
@@ -248,10 +365,11 @@ class ComprehensiveDocxReviewer:
         full_text = paragraph.text
 
         if start_pos is None or end_pos is None:
-            if old_text not in full_text:
+            old_text_plain = strip_formatting_markers(old_text)
+            if old_text_plain not in full_text:
                 raise ValueError(f"未找到文本: {old_text}")
-            start_pos = full_text.index(old_text)
-            end_pos = start_pos + len(old_text)
+            start_pos = full_text.index(old_text_plain)
+            end_pos = start_pos + len(old_text_plain)
 
         del_id = self.delete_text_with_tracking(
             paragraph_index, start_pos, end_pos, author, delete_color
@@ -600,7 +718,7 @@ class ComprehensiveDocxReviewer:
                 
                 if start_pos is None or end_pos is None:
                     paragraph = self.document.paragraphs[mod['paragraph_index']]
-                    text_to_delete = mod['text']
+                    text_to_delete = strip_formatting_markers(mod['text'])
                     pos = paragraph.text.find(text_to_delete)
                     if pos == -1:
                         print(f"⚠️ 未找到文本: '{text_to_delete[:30]}...' 在段落 {mod['paragraph_index']}")
